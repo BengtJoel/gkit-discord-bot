@@ -13,6 +13,7 @@ import { enabledConfig } from "../../settings.js";
 import { renderTemplate } from "../../lib/template.js";
 import { defineCommands } from "../registry.js";
 import { log } from "../../lib/log.js";
+import { guildT, userT } from "../../i18n/index.js";
 
 /** "Join to create": joining a hub channel creates a personal voice channel that is deleted when empty. */
 const owners = new Map<string, string>(); // channelId -> ownerId
@@ -24,7 +25,8 @@ async function onJoinHub(state: VoiceState) {
   if (!cfg || !cfg.hubChannelIds.includes(state.channel.id)) return;
 
   const parent = cfg.categoryId ?? state.channel.parentId ?? undefined;
-  const name = renderTemplate(cfg.nameTemplate, { member, guild: state.guild }).slice(0, 100);
+  const tr = await guildT(state.guild);
+  const name = renderTemplate(cfg.nameTemplate || tr("defaults.tempVoiceName"), { member, guild: state.guild }).slice(0, 100) || member.displayName;
   const channel = await state.guild.channels.create({
     name,
     type: ChannelType.GuildVoice,
@@ -36,7 +38,7 @@ async function onJoinHub(state: VoiceState) {
         allow: [PermissionFlagsBits.ManageChannels, PermissionFlagsBits.MoveMembers, PermissionFlagsBits.Connect],
       },
     ],
-    reason: `Tillfällig kanal för ${member.user.username}`,
+    reason: tr("tempVoice.reasonCreated", { user: member.user.username }),
   });
   owners.set(channel.id, member.id);
   await db.insert(schema.tempChannels).values({ channelId: channel.id, guildId: state.guild.id, ownerId: member.id });
@@ -52,7 +54,8 @@ async function maybeCleanup(state: VoiceState) {
   if (ch.members.filter((m) => !m.user.bot).size > 0) return;
   owners.delete(ch.id);
   await db.delete(schema.tempChannels).where(eq(schema.tempChannels.channelId, ch.id));
-  await ch.delete("Tillfällig kanal tom").catch(() => {});
+  const tr = await guildT(state.guild);
+  await ch.delete(tr("tempVoice.reasonEmpty")).catch(() => {});
 }
 
 export function registerTempVoice(client: Client) {
@@ -74,7 +77,7 @@ export function registerTempVoice(client: Client) {
       const ch = await c.channels.fetch(r.channelId).catch(() => null);
       if (!ch || !ch.isVoiceBased() || ch.members.size === 0) {
         await db.delete(schema.tempChannels).where(eq(schema.tempChannels.channelId, r.channelId));
-        if (ch) await ch.delete("Tillfällig kanal tom").catch(() => {});
+        if (ch) await ch.delete("Temporary channel empty").catch(() => {});
       } else owners.set(r.channelId, r.ownerId);
     }
   });
@@ -85,38 +88,34 @@ export function registerTempVoice(client: Client) {
       module: "tempVoice",
       data: new SlashCommandBuilder()
         .setName("voice")
-        .setDescription("Hantera din tillfälliga röstkanal")
+        .setDescription("voice")
+        .addSubcommand((s) => s.setName("name").setDescription("name").addStringOption((o) => o.setName("name").setDescription("name").setRequired(true).setMaxLength(100)))
         .addSubcommand((s) =>
-          s.setName("namn").setDescription("Byt namn").addStringOption((o) => o.setName("namn").setDescription("Nytt namn").setRequired(true).setMaxLength(100)),
+          s.setName("limit").setDescription("limit").addIntegerOption((o) => o.setName("amount").setDescription("amount").setMinValue(0).setMaxValue(99).setRequired(true)),
         )
-        .addSubcommand((s) =>
-          s
-            .setName("gräns")
-            .setDescription("Sätt max antal (0 = obegränsat)")
-            .addIntegerOption((o) => o.setName("antal").setDescription("0-99").setMinValue(0).setMaxValue(99).setRequired(true)),
-        )
-        .addSubcommand((s) => s.setName("lås").setDescription("Lås kanalen"))
-        .addSubcommand((s) => s.setName("lås_upp").setDescription("Lås upp kanalen"))
-        .addSubcommand((s) => s.setName("ta_över").setDescription("Ta över kanalen om ägaren har gått"))
+        .addSubcommand((s) => s.setName("lock").setDescription("lock"))
+        .addSubcommand((s) => s.setName("unlock").setDescription("unlock"))
+        .addSubcommand((s) => s.setName("claim").setDescription("claim"))
         .toJSON(),
       async execute(i) {
+        const tu = userT(i);
         const ch = i.member.voice.channel;
-        if (!ch || !owners.has(ch.id)) return i.reply({ content: "Du måste sitta i en tillfällig kanal.", ...eph });
+        if (!ch || !owners.has(ch.id)) return i.reply({ content: tu("tempVoice.mustBeInTemp"), ...eph });
         const sub = i.options.getSubcommand();
         const ownerId = owners.get(ch.id)!;
-        if (sub === "ta_över") {
-          if (ch.members.has(ownerId)) return i.reply({ content: "Ägaren är fortfarande kvar.", ...eph });
+        if (sub === "claim") {
+          if (ch.members.has(ownerId)) return i.reply({ content: tu("tempVoice.ownerStillHere"), ...eph });
           owners.set(ch.id, i.user.id);
           await db.update(schema.tempChannels).set({ ownerId: i.user.id }).where(eq(schema.tempChannels.channelId, ch.id));
           await ch.permissionOverwrites.edit(i.user.id, { ManageChannels: true, MoveMembers: true, Connect: true });
-          return i.reply({ content: "Kanalen är nu din.", ...eph });
+          return i.reply({ content: tu("tempVoice.claimed"), ...eph });
         }
-        if (ownerId !== i.user.id) return i.reply({ content: "Bara kanalens ägare kan göra det.", ...eph });
-        if (sub === "namn") await ch.setName(i.options.getString("namn", true));
-        if (sub === "gräns") await ch.setUserLimit(i.options.getInteger("antal", true));
-        if (sub === "lås") await ch.permissionOverwrites.edit(i.guild.roles.everyone, { Connect: false });
-        if (sub === "lås_upp") await ch.permissionOverwrites.edit(i.guild.roles.everyone, { Connect: null });
-        return i.reply({ content: "Klart ✅", ...eph });
+        if (ownerId !== i.user.id) return i.reply({ content: tu("tempVoice.onlyOwner"), ...eph });
+        if (sub === "name") await ch.setName(i.options.getString("name", true));
+        if (sub === "limit") await ch.setUserLimit(i.options.getInteger("amount", true));
+        if (sub === "lock") await ch.permissionOverwrites.edit(i.guild.roles.everyone, { Connect: false });
+        if (sub === "unlock") await ch.permissionOverwrites.edit(i.guild.roles.everyone, { Connect: null });
+        return i.reply({ content: tu("tempVoice.done"), ...eph });
       },
     },
   ]);

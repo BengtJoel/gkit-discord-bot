@@ -2,6 +2,8 @@ import { Client, Events, GatewayIntentBits, Partials, MessageFlags, type Guild }
 import { db, schema } from "../db/index.js";
 import { getModule } from "../settings.js";
 import { log } from "../lib/log.js";
+import { userT } from "../i18n/index.js";
+import { registerGateway } from "../core/events.js";
 import { commands } from "./registry.js";
 import { registerActivity, trackCommand, upsertMember, flushActivity } from "./modules/activity.js";
 import { registerLevels } from "./modules/levels.js";
@@ -12,6 +14,9 @@ import { registerAutomod } from "./modules/automod.js";
 import { handleCustomCommand, listCustomCommands, toCommandJSON } from "./modules/customCommands.js";
 import { startTimers } from "./modules/timers.js";
 import { registerTempVoice } from "./modules/tempVoice.js";
+import { registerServerLog } from "./modules/serverLog.js";
+import { startJobWorker, stopJobWorker } from "../core/jobs.js";
+import { pruneActionLog } from "../core/actions.js";
 
 export const client = new Client({
   intents: [
@@ -22,6 +27,7 @@ export const client = new Client({
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildExpressions, // emoji added/removed in the server log
   ],
   partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember],
 });
@@ -55,6 +61,7 @@ async function upsertGuild(guild: Guild, left = false) {
 }
 
 export async function startBot(token: string) {
+  registerGateway(client);
   registerActivity(client);
   registerLevels(client);
   registerReactionRoles(client);
@@ -62,11 +69,15 @@ export async function startBot(token: string) {
   registerModeration();
   registerAutomod(client);
   registerTempVoice(client);
+  registerServerLog(client);
 
   client.once(Events.ClientReady, async (c) => {
     log.info({ tag: c.user.tag, guilds: c.guilds.cache.size }, "Bot ready");
     await loadReactionRoles();
     await startTimers(c);
+    await startJobWorker();
+    await pruneActionLog().catch(() => {});
+    setInterval(() => void pruneActionLog().catch(() => {}), 86400_000).unref();
     for (const guild of c.guilds.cache.values()) {
       await upsertGuild(guild).catch((err) => log.error({ err }, "upsertGuild"));
       await syncGuildCommands(guild).catch((err) => log.error({ err, guild: guild.id }, "command sync failed"));
@@ -95,7 +106,7 @@ export async function startBot(token: string) {
       const builtin = commands.get(i.commandName);
       if (builtin) {
         if (!(await getModule(i.guildId, builtin.module)).enabled) {
-          await i.reply({ content: "Den här modulen är avstängd.", flags: MessageFlags.Ephemeral });
+          await i.reply({ content: userT(i)("common.moduleDisabled"), flags: MessageFlags.Ephemeral });
           return;
         }
         await builtin.execute(i);
@@ -105,7 +116,7 @@ export async function startBot(token: string) {
     } catch (err) {
       log.error({ err, command: i.isCommand() ? i.commandName : undefined }, "interaction failed");
       if (i.isRepliable()) {
-        const payload = { content: "Något gick fel 😕", flags: MessageFlags.Ephemeral } as const;
+        const payload = { content: userT(i)("common.somethingWrong"), flags: MessageFlags.Ephemeral } as const;
         if (i.deferred || i.replied) await i.followUp(payload).catch(() => {});
         else await i.reply(payload).catch(() => {});
       }
@@ -116,6 +127,7 @@ export async function startBot(token: string) {
 }
 
 export async function stopBot() {
+  stopJobWorker();
   await flushActivity();
   await client.destroy();
 }

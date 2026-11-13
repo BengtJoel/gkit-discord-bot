@@ -12,6 +12,7 @@ import { commands as builtinCommands } from "../../bot/registry.js";
 import { previewCron, scheduleTimer, unscheduleTimer, nextRunOf } from "../../bot/modules/timers.js";
 import { previewMee6, startMee6Import, getImportJob } from "../../mee6/import.js";
 import { getModule } from "../../settings.js";
+import { apiError } from "../errors.js";
 
 type IdP = { Params: { guildId: string; id: string } };
 const snowflake = z.string().regex(/^\d{15,22}$/);
@@ -31,7 +32,7 @@ const rrBody = z.object({
 });
 
 const commandBody = z.object({
-  name: z.string().regex(commandNameRe, "Endast a-z, 0-9, - och _ (max 32 tecken)"),
+  name: z.string().regex(commandNameRe, "errors.commandName"),
   description: z.string().max(100).default("Custom command"),
   response: z.string().min(1).max(2000),
   ephemeral: z.boolean().default(false),
@@ -96,7 +97,7 @@ export function registerFeatureRoutes(app: FastifyInstance) {
     r.patch<IdP & { Body: { xp?: number; level?: number } }>("/api/guilds/:guildId/levels/:id", async (req, reply) => {
       const body = z.object({ xp: z.number().int().min(0).optional(), level: z.number().int().min(0).max(1000).optional() }).parse(req.body);
       const xp = body.level !== undefined ? totalXpForLevel(body.level) : body.xp;
-      if (xp === undefined) return reply.code(400).send({ error: "Ange xp eller level" });
+      if (xp === undefined) return apiError(reply, 400, "errors.xpOrLevel");
       const t = schema.memberLevels;
       const level = levelFromXp(xp).level;
       await db
@@ -122,7 +123,8 @@ export function registerFeatureRoutes(app: FastifyInstance) {
       try {
         return await previewMee6(req.params.guildId);
       } catch (err) {
-        return reply.code(400).send({ error: (err as Error).message });
+        const e = err as Error & { code?: string; params?: Record<string, string | number> };
+        return e.code ? apiError(reply, 400, e.code, e.params) : reply.code(400).send({ error: e.message });
       }
     });
     r.post<GP>("/api/guilds/:guildId/import/mee6", async (req) => {
@@ -159,7 +161,7 @@ export function registerFeatureRoutes(app: FastifyInstance) {
         const messageId = await publishReactionRoles(client, row.id);
         return { ...row, messageId };
       } catch (err) {
-        return reply.code(207).send({ ...row, warning: (err as Error).message });
+        return reply.code(207).send({ ...row, warning: (err as Error & { code?: string }).code ?? (err as Error).message });
       }
     });
 
@@ -168,7 +170,7 @@ export function registerFeatureRoutes(app: FastifyInstance) {
       const t = schema.reactionRoleMessages;
       const id = Number(req.params.id);
       const [existing] = await db.select().from(t).where(and(eq(t.id, id), eq(t.guildId, req.params.guildId)));
-      if (!existing) return reply.code(404).send({ error: "Hittades inte" });
+      if (!existing) return apiError(reply, 404, "errors.notFound");
       // Moving to another channel = post a fresh message there
       const messageId = body.channelId !== existing.channelId ? null : (body.messageId ?? existing.messageId);
       if (body.channelId !== existing.channelId) await unpublishReactionRoles(client, existing);
@@ -177,7 +179,7 @@ export function registerFeatureRoutes(app: FastifyInstance) {
       try {
         return { ...row, messageId: await publishReactionRoles(client, id) };
       } catch (err) {
-        return reply.code(207).send({ ...row, warning: (err as Error).message });
+        return reply.code(207).send({ ...row, warning: (err as Error & { code?: string }).code ?? (err as Error).message });
       }
     });
 
@@ -202,18 +204,18 @@ export function registerFeatureRoutes(app: FastifyInstance) {
     // Static list too, so the check works even when the API runs without the bot (BOT_ENABLED=false)
     const reserved = new Set(["rank", "leaderboard", "warn", "timeout", "kick", "ban", "unban", "purge", "cases", "voice"]);
     const checkName = (name: string) =>
-      builtinCommands.has(name) || reserved.has(name) ? `/${name} är ett inbyggt kommando, välj ett annat namn.` : null;
+      builtinCommands.has(name) || reserved.has(name);
 
     r.post<GP>("/api/guilds/:guildId/commands", async (req, reply) => {
       const body = commandBody.parse(req.body);
       const clash = checkName(body.name);
-      if (clash) return reply.code(400).send({ error: clash });
+      if (clash) return apiError(reply, 400, "errors.builtinCommand", { name: body.name });
       const [row] = await db
         .insert(schema.customCommands)
         .values({ ...body, guildId: req.params.guildId })
         .onConflictDoNothing()
         .returning();
-      if (!row) return reply.code(409).send({ error: `/${body.name} finns redan` });
+      if (!row) return apiError(reply, 409, "errors.commandExists", { name: body.name });
       await audit(req.params.guildId, req.session!.userId, "commands.create", { name: body.name });
       await resync(req.params.guildId);
       return row;
@@ -222,7 +224,7 @@ export function registerFeatureRoutes(app: FastifyInstance) {
     r.put<IdP>("/api/guilds/:guildId/commands/:id", async (req, reply) => {
       const body = commandBody.parse(req.body);
       const clash = checkName(body.name);
-      if (clash) return reply.code(400).send({ error: clash });
+      if (clash) return apiError(reply, 400, "errors.builtinCommand", { name: body.name });
       const t = schema.customCommands;
       const [row] = await db
         .update(t)
@@ -254,7 +256,7 @@ export function registerFeatureRoutes(app: FastifyInstance) {
       try {
         return { runs: previewCron(cron, timezone) };
       } catch (err) {
-        return reply.code(400).send({ error: `Ogiltigt schema: ${(err as Error).message}` });
+        return apiError(reply, 400, "errors.invalidSchedule", { detail: (err as Error).message });
       }
     });
 
@@ -263,14 +265,14 @@ export function registerFeatureRoutes(app: FastifyInstance) {
         previewCron(body.cron, body.timezone);
         return null;
       } catch (err) {
-        return `Ogiltigt schema: ${(err as Error).message}`;
+        return (err as Error).message;
       }
     };
 
     r.post<GP>("/api/guilds/:guildId/timers", async (req, reply) => {
       const body = timerBody.parse(req.body);
       const bad = validCron(body);
-      if (bad) return reply.code(400).send({ error: bad });
+      if (bad) return apiError(reply, 400, "errors.invalidSchedule", { detail: bad });
       const [row] = await db.insert(schema.timers).values({ ...body, guildId: req.params.guildId }).returning();
       scheduleTimer(row);
       await audit(req.params.guildId, req.session!.userId, "timers.create", { id: row.id });
@@ -280,14 +282,14 @@ export function registerFeatureRoutes(app: FastifyInstance) {
     r.put<IdP>("/api/guilds/:guildId/timers/:id", async (req, reply) => {
       const body = timerBody.parse(req.body);
       const bad = validCron(body);
-      if (bad) return reply.code(400).send({ error: bad });
+      if (bad) return apiError(reply, 400, "errors.invalidSchedule", { detail: bad });
       const t = schema.timers;
       const [row] = await db
         .update(t)
         .set(body)
         .where(and(eq(t.id, Number(req.params.id)), eq(t.guildId, req.params.guildId)))
         .returning();
-      if (!row) return reply.code(404).send({ error: "Hittades inte" });
+      if (!row) return apiError(reply, 404, "errors.notFound");
       scheduleTimer(row);
       await audit(req.params.guildId, req.session!.userId, "timers.update", { id: row.id });
       return { ...row, nextRunAt: nextRunOf(row.id) };
@@ -296,9 +298,9 @@ export function registerFeatureRoutes(app: FastifyInstance) {
     r.post<IdP>("/api/guilds/:guildId/timers/:id/test", async (req, reply) => {
       const t = schema.timers;
       const [row] = await db.select().from(t).where(and(eq(t.id, Number(req.params.id)), eq(t.guildId, req.params.guildId)));
-      if (!row) return reply.code(404).send({ error: "Hittades inte" });
+      if (!row) return apiError(reply, 404, "errors.notFound");
       const ch = await client.channels.fetch(row.channelId).catch(() => null);
-      if (!ch?.isSendable()) return reply.code(400).send({ error: "Boten kan inte skriva i kanalen" });
+      if (!ch?.isSendable()) return apiError(reply, 400, "errors.botCannotWrite");
       await ch.send(row.content);
       return { ok: true };
     });
@@ -334,6 +336,15 @@ export function registerFeatureRoutes(app: FastifyInstance) {
       await db.delete(t).where(and(eq(t.id, Number(req.params.id)), eq(t.guildId, req.params.guildId)));
       await audit(req.params.guildId, req.session!.userId, "cases.delete", { id: req.params.id });
       return { ok: true };
+    });
+
+    /* What the bot did (or failed to do) and why — roles it couldn't give, DMs that bounced, etc. */
+    r.get<GP & { Querystring: { failed?: string; source?: string } }>("/api/guilds/:guildId/action-log", async (req) => {
+      const tbl = schema.actionLog;
+      const conds = [eq(tbl.guildId, req.params.guildId)];
+      if (req.query.failed === "1") conds.push(eq(tbl.ok, false));
+      if (req.query.source) conds.push(eq(tbl.source, req.query.source));
+      return db.select().from(tbl).where(and(...conds)).orderBy(desc(tbl.createdAt)).limit(200);
     });
 
     r.get<GP>("/api/guilds/:guildId/audit", async (req) =>

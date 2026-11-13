@@ -5,6 +5,7 @@ import { getAllModules, isModule, saveModule, moduleNames } from "../../settings
 import { client, syncGuildCommands } from "../../bot/client.js";
 import { botEnabled } from "../../env.js";
 import { requireGuildAccess } from "../auth.js";
+import { apiError } from "../errors.js";
 
 export type GP = { Params: { guildId: string } };
 
@@ -59,7 +60,7 @@ export function registerGuildRoutes(app: FastifyInstance) {
       const emojis = g ? [...g.emojis.cache.values()].map((e) => ({ id: e.id, name: e.name, animated: e.animated, tag: e.toString() })) : [];
       return {
         id: req.params.guildId,
-        name: g?.name ?? "Utvecklingsläge",
+        name: g?.name ?? null,
         icon: g?.icon ?? null,
         memberCount: g?.memberCount ?? 0,
         channels,
@@ -73,7 +74,7 @@ export function registerGuildRoutes(app: FastifyInstance) {
       "/api/guilds/:guildId/modules/:module",
       async (req, reply) => {
         const { guildId, module } = req.params;
-        if (!isModule(module)) return reply.code(404).send({ error: "Okänd modul" });
+        if (!isModule(module)) return apiError(reply, 404, "errors.unknownModule");
         const before = (await getAllModules(guildId))[module];
         const state = await saveModule(guildId, module, req.body ?? {}, req.session!.userId);
         await audit(guildId, req.session!.userId, `module.${module}.update`, { enabled: state.enabled });

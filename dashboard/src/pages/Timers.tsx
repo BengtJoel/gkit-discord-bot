@@ -5,6 +5,7 @@ import { api, fmtDateTime } from "../lib/api";
 import { useGuild, useModuleForm } from "../lib/guild";
 import { ModuleShell } from "../components/ModuleShell";
 import { Badge, Button, Card, ChannelSelect, Empty, Field, Modal, Segmented, Spinner, Toggle, useToast } from "../components/ui";
+import { useT, tr, currentLocale } from "../lib/i18n";
 
 interface Timer {
   id?: number;
@@ -18,15 +19,12 @@ interface Timer {
   nextRunAt?: string | null;
 }
 
-const DAYS = [
-  { v: 1, l: "Mån" },
-  { v: 2, l: "Tis" },
-  { v: 3, l: "Ons" },
-  { v: 4, l: "Tor" },
-  { v: 5, l: "Fre" },
-  { v: 6, l: "Lör" },
-  { v: 0, l: "Sön" },
-];
+/** Monday-first, cron day numbers (0 = Sunday), names in the current language */
+const days = () =>
+  [1, 2, 3, 4, 5, 6, 0].map((v) => ({
+    v,
+    l: new Date(Date.UTC(2024, 0, v === 0 ? 7 : v, 12)).toLocaleDateString(currentLocale(), { weekday: "short", timeZone: "UTC" }),
+  }));
 
 /** Simple builder for the common cases; anything else falls back to raw cron */
 type Simple = { kind: "weekly"; days: number[]; time: string } | { kind: "hourly"; every: number } | { kind: "cron" };
@@ -52,14 +50,18 @@ function toCron(s: Simple, fallback: string) {
 }
 function describe(cron: string) {
   const s = parseCron(cron);
-  if (s.kind === "weekly") return s.days.length === 7 ? `Varje dag ${s.time}` : `${DAYS.filter((d) => s.days.includes(d.v)).map((d) => d.l).join(", ")} kl ${s.time}`;
-  if (s.kind === "hourly") return `Var ${s.every}:e timme`;
+  if (s.kind === "weekly")
+    return s.days.length === 7
+      ? tr("dash.timers.everyDayAt", { time: s.time })
+      : tr("dash.timers.daysAt", { days: days().filter((d) => s.days.includes(d.v)).map((d) => d.l).join(", "), time: s.time });
+  if (s.kind === "hourly") return tr("dash.timers.everyNHours", { count: s.every });
   return cron;
 }
 
 export function Timers() {
   const f = useModuleForm("timers");
   const g = useGuild();
+  const { t } = useT();
   const qc = useQueryClient();
   const toast = useToast();
   const [draft, setDraft] = useState<Timer | null>(null);
@@ -68,7 +70,7 @@ export function Timers() {
   const save = useMutation({
     mutationFn: (t: Timer) => (t.id ? api(`/guilds/${g.id}/timers/${t.id}`, { method: "PUT", json: t }) : api(`/guilds/${g.id}/timers`, { method: "POST", json: t })),
     onSuccess: () => {
-      toast("Schemat är sparat");
+      toast(t("dash.timers.saved"));
       setDraft(null);
       inval();
     },
@@ -77,20 +79,20 @@ export function Timers() {
   const del = useMutation({ mutationFn: (id: number) => api(`/guilds/${g.id}/timers/${id}`, { method: "DELETE" }), onSuccess: inval });
   const test = useMutation({
     mutationFn: (id: number) => api(`/guilds/${g.id}/timers/${id}/test`, { method: "POST" }),
-    onSuccess: () => toast("Skickat till kanalen"),
+    onSuccess: () => toast(t("dash.timers.sent")),
     onError: (e: Error) => toast(e.message, "bad"),
   });
-  const chan = (id: string) => g.channels.find((c) => c.id === id)?.name ?? "okänd";
+  const chan = (id: string) => g.channels.find((c) => c.id === id)?.name ?? t("dash.common.unknownChannel");
 
   return (
     <ModuleShell
-      title="Schemalagda meddelanden"
+      title={t("dash.nav.timers")}
       icon={<Clock className="size-5" />}
-      description="Meddelanden som skickas automatiskt, t.ex. raidpåminnelser varje onsdag 19:00. Tider är i svensk tid."
+      description={t("dash.timers.description")}
       form={f}
       actions={
         <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setDraft({ name: "", channelId: "", content: "", cron: "45 18 * * 3", timezone: "Europe/Stockholm", enabled: true })}>
-          Nytt schema
+          {t("dash.timers.new")}
         </Button>
       }
     >
@@ -98,27 +100,27 @@ export function Timers() {
         {list.isLoading ? (
           <div className="grid h-32 place-items-center"><Spinner /></div>
         ) : !list.data?.length ? (
-          <Empty icon={<Clock className="size-5" />} title="Inga scheman" />
+          <Empty icon={<Clock className="size-5" />} title={t("dash.timers.empty")} />
         ) : (
           <ul className="divide-y divide-line">
-            {list.data.map((t) => (
-              <li key={t.id} className="flex items-center gap-4 px-5 py-3">
+            {list.data.map((timer) => (
+              <li key={timer.id} className="flex items-center gap-4 px-5 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{t.name || describe(t.cron)}</span>
-                    {!t.enabled && <Badge>Pausad</Badge>}
+                    <span className="font-medium">{timer.name || describe(timer.cron)}</span>
+                    {!timer.enabled && <Badge>{t("dash.timers.paused")}</Badge>}
                   </div>
                   <div className="truncate text-sm text-muted">
-                    #{chan(t.channelId)} · {describe(t.cron)} · {t.content}
+                    #{chan(timer.channelId)} · {describe(timer.cron)} · {timer.content}
                   </div>
                 </div>
                 <div className="hidden text-right text-xs text-muted sm:block">
-                  <div>Nästa: {t.enabled && t.nextRunAt ? fmtDateTime(t.nextRunAt) : "—"}</div>
-                  <div>Senast: {fmtDateTime(t.lastRunAt)}</div>
+                  <div>{t("dash.timers.next")}: {timer.enabled && timer.nextRunAt ? fmtDateTime(timer.nextRunAt) : "—"}</div>
+                  <div>{t("dash.timers.last")}: {fmtDateTime(timer.lastRunAt)}</div>
                 </div>
-                <Button variant="ghost" size="sm" title="Skicka nu" onClick={() => test.mutate(t.id!)}><Send className="size-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => setDraft(t)}><Pencil className="size-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => confirm("Ta bort schemat?") && del.mutate(t.id!)}><Trash2 className="size-4" /></Button>
+                <Button variant="ghost" size="sm" title={t("dash.timers.sendNow")} onClick={() => test.mutate(timer.id!)}><Send className="size-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => setDraft(timer)}><Pencil className="size-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => confirm(t("dash.timers.confirmDelete")) && del.mutate(timer.id!)}><Trash2 className="size-4" /></Button>
               </li>
             ))}
           </ul>
@@ -131,6 +133,7 @@ export function Timers() {
 
 function TimerEditor({ draft, setDraft, onSave, saving }: { draft: Timer; setDraft: (t: Timer | null) => void; onSave: () => void; saving: boolean }) {
   const g = useGuild();
+  const { t } = useT();
   const [simple, setSimple] = useState<Simple>(() => parseCron(draft.cron));
   const [preview, setPreview] = useState<{ runs?: string[]; error?: string }>({});
   const cron = toCron(simple, draft.cron);
@@ -153,32 +156,32 @@ function TimerEditor({ draft, setDraft, onSave, saving }: { draft: Timer; setDra
       open
       wide
       onClose={() => setDraft(null)}
-      title={draft.id ? "Redigera schema" : "Nytt schema"}
+      title={draft.id ? t("dash.timers.editTitle") : t("dash.timers.new")}
       footer={
         <>
-          <Button variant="ghost" onClick={() => setDraft(null)}>Avbryt</Button>
-          <Button variant="primary" loading={saving} disabled={!draft.channelId || !draft.content || !!preview.error} onClick={onSave}>Spara</Button>
+          <Button variant="ghost" onClick={() => setDraft(null)}>{t("dash.common.cancel")}</Button>
+          <Button variant="primary" loading={saving} disabled={!draft.channelId || !draft.content || !!preview.error} onClick={onSave}>{t("dash.common.save")}</Button>
         </>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Namn (valfritt)"><input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Raidpåminnelse" /></Field>
-        <Field label="Kanal"><ChannelSelect value={draft.channelId || null} onChange={(v) => setDraft({ ...draft, channelId: v ?? "" })} clearable={false} /></Field>
+        <Field label={t("dash.timers.nameOptional")}><input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder={t("dash.timers.namePlaceholder")} /></Field>
+        <Field label={t("dash.common.channel")}><ChannelSelect value={draft.channelId || null} onChange={(v) => setDraft({ ...draft, channelId: v ?? "" })} clearable={false} /></Field>
       </div>
-      <Field label="Meddelande" hint="Använd <@&roll-ID> för att pinga en roll.">
+      <Field label={t("dash.common.message")} hint={t("dash.timers.pingHint")}>
         <textarea className="input" rows={4} value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} />
       </Field>
-      <Field label="När">
+      <Field label={t("dash.timers.when")}>
         <Segmented
           value={simple.kind}
           onChange={(k) => setSimple(k === "weekly" ? { kind: "weekly", days: [3], time: "18:45" } : k === "hourly" ? { kind: "hourly", every: 6 } : { kind: "cron" })}
-          options={[{ value: "weekly", label: "Dagar och tid" }, { value: "hourly", label: "Intervall" }, { value: "cron", label: "Cron (avancerat)" }]}
+          options={[{ value: "weekly", label: t("dash.timers.kinds.weekly") }, { value: "hourly", label: t("dash.timers.kinds.hourly") }, { value: "cron", label: t("dash.timers.kinds.cron") }]}
         />
       </Field>
       {simple.kind === "weekly" && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-1">
-            {DAYS.map((d) => {
+            {days().map((d) => {
               const on = simple.days.includes(d.v);
               return (
                 <button
@@ -197,23 +200,23 @@ function TimerEditor({ draft, setDraft, onSave, saving }: { draft: Timer; setDra
       )}
       {simple.kind === "hourly" && (
         <div className="flex items-center gap-2 text-sm">
-          Var
+          {t("dash.timers.every")}
           <input type="number" min={1} max={23} className="input w-20" value={simple.every} onChange={(e) => setSimple({ kind: "hourly", every: Math.max(1, Number(e.target.value)) })} />
-          :e timme
+          {t("dash.timers.hours")}
         </div>
       )}
-      {simple.kind === "cron" && <input className="input font-mono" value={draft.cron} onChange={(e) => setDraft({ ...draft, cron: e.target.value })} placeholder="minut timme dag månad veckodag" />}
+      {simple.kind === "cron" && <input className="input font-mono" value={draft.cron} onChange={(e) => setDraft({ ...draft, cron: e.target.value })} placeholder={t("dash.timers.cronPlaceholder")} />}
       <div className="rounded-lg border border-line bg-panel-2/40 px-4 py-3 text-sm">
         {preview.error ? (
           <span className="text-red-300">{preview.error}</span>
         ) : (
           <>
-            <span className="text-muted">Nästa gånger: </span>
+            <span className="text-muted">{t("dash.timers.nextRuns")}: </span>
             {preview.runs?.map((r) => fmtDateTime(r)).join(" · ") ?? "…"}
           </>
         )}
       </div>
-      <label className="flex items-center gap-3 text-sm"><Toggle size="sm" checked={draft.enabled} onChange={(enabled) => setDraft({ ...draft, enabled })} /> Aktivt</label>
+      <label className="flex items-center gap-3 text-sm"><Toggle size="sm" checked={draft.enabled} onChange={(enabled) => setDraft({ ...draft, enabled })} /> {t("dash.common.active")}</label>
     </Modal>
   );
 }

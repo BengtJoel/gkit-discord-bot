@@ -1,0 +1,335 @@
+{
+  "defaults": {
+    "levelUp": "GG {user}, du nådde **level {level}**! 🎉",
+    "welcomeJoin": "Välkommen {user} till **{server}**! Du är medlem nummer {membercount}.",
+    "welcomeDm": "Välkommen till {server}!",
+    "welcomeLeave": "**{username}** lämnade servern.",
+    "tempVoiceName": "{displayname}s kanal",
+    "reactionRolesTitle": "Välj dina roller"
+  },
+  "common": {
+    "somethingWrong": "Något gick fel 😕",
+    "moduleDisabled": "Den här modulen är avstängd."
+  },
+  "levels": {
+    "noXp": "{{user}} har ingen XP ännu.",
+    "rank": "Rank",
+    "level": "Level",
+    "xp": "XP",
+    "noMorePlaces": "Inga fler placeringar.",
+    "leaderboardTitle": "Topplista — {{server}}",
+    "leaderboardLine": "**{{pos}}.** {{user}} — level {{level}} · {{xp}} XP",
+    "rewardReason": "Belöning för level {{level}}",
+    "rewardRemovedReason": "Belöning för level {{level}} (ersatt)",
+    "demotedReason": "Levelbelöning borttagen (nu level {{level}})"
+  },
+  "moderation": {
+    "actions": {
+      "warn": "Varning",
+      "timeout": "Timeout",
+      "kick": "Kick",
+      "ban": "Ban",
+      "tempban": "Tillfällig ban",
+      "unban": "Unban",
+      "automod": "Automod"
+    },
+    "caseTitle": "Ärende #{{n}} · {{action}}",
+    "user": "Användare",
+    "moderator": "Moderator",
+    "reason": "Anledning",
+    "duration": "Längd",
+    "dm": "Du har fått **{{action}}**{{extra}} på **{{server}}**.",
+    "dmReason": "Anledning: {{reason}}",
+    "memberNotFound": "Hittade inte medlemmen.",
+    "cannotModerate": "Du kan inte moderera den medlemmen.",
+    "cannotModerateEither": "Du eller boten kan inte moderera den medlemmen.",
+    "immune": "Medlemmen har en immunitetsroll och kan inte modereras.",
+    "warned_one": "⚠️ {{user}} varnades (ärende #{{n}}, {{count}} varning totalt).",
+    "warned_other": "⚠️ {{user}} varnades (ärende #{{n}}, {{count}} varningar totalt).",
+    "invalidDuration": "Ogiltig tid. Använd t.ex. 10m, 2h eller 1d (max 28d).",
+    "invalidBanDuration": "Ogiltig tid. Använd t.ex. 1d eller 2w.",
+    "timedOut": "🔇 {{user}} fick timeout i {{duration}} (ärende #{{n}}).",
+    "kicked": "👢 {{user}} kickades (ärende #{{n}}).",
+    "banned": "🔨 {{user}} bannades (ärende #{{n}}).",
+    "tempBanned": "🔨 {{user}} bannades i {{duration}} (ärende #{{n}}).",
+    "notBanned": "Den användaren är inte bannad.",
+    "unbanned": "✅ {{user}} är inte längre bannad (ärende #{{n}}).",
+    "purgeUnsupported": "Det fungerar inte i den här kanalen.",
+    "purged_one": "🧹 Raderade {{count}} meddelande.",
+    "purged_other": "🧹 Raderade {{count}} meddelanden.",
+    "noCases": "{{user}} har inga ärenden.",
+    "casesTitle": "Ärenden för {{user}}",
+    "autoEscalation": "Automatiskt: {{count}} varningar",
+    "tempbanExpired": "Tillfällig ban har gått ut"
+  },
+  "automod": {
+    "notice": "{{user}}, ditt meddelande togs bort ({{rule}}).",
+    "reason": "Automod: {{rule}}",
+    "rules": {
+      "badWords": "förbjudet ord",
+      "invites": "Discord-inbjudan",
+      "links": "länk",
+      "mentions": "för många nämningar",
+      "caps": "för mycket versaler",
+      "spam": "spam"
+    }
+  },
+  "customCommands": {
+    "disabled": "Det här kommandot är avstängt.",
+    "noPermission": "Du har inte behörighet att använda det här kommandot.",
+    "userOption": "Valfri användare, visas som {target}"
+  },
+  "tempVoice": {
+    "mustBeInTemp": "Du måste sitta i en tillfällig kanal.",
+    "ownerStillHere": "Ägaren är fortfarande kvar.",
+    "claimed": "Kanalen är nu din.",
+    "onlyOwner": "Bara kanalens ägare kan göra det.",
+    "done": "Klart ✅",
+    "reasonCreated": "Tillfällig kanal för {{user}}",
+    "reasonEmpty": "Tillfällig kanal tom"
+  },
+  "welcome": {
+    "autoroleReason": "Autoroll"
+  },
+  "reactionRoles": {
+    "reason": "Reaction role",
+    "reasonUnique": "Reaction role (en åt gången)"
+  },
+  "log": {
+    "titles": {
+      "messageEdited": "Meddelande redigerat",
+      "messageDeleted": "Meddelande raderat",
+      "messagesBulkDeleted_one": "{{count}} meddelande raderat",
+      "messagesBulkDeleted_other": "{{count}} meddelanden raderade",
+      "memberJoined": "Medlem gick med",
+      "memberLeft": "Medlem lämnade",
+      "nicknameChanged": "Smeknamn ändrat",
+      "rolesChanged": "Roller ändrade",
+      "timeoutAdded": "Medlem fick timeout",
+      "timeoutRemoved": "Timeout hävd",
+      "banned": "Medlem bannad",
+      "unbanned": "Ban hävd",
+      "voiceJoined": "Gick in i röstkanal",
+      "voiceLeft": "Lämnade röstkanal",
+      "voiceMoved": "Bytte röstkanal",
+      "channelCreated": "Kanal skapad",
+      "channelDeleted": "Kanal raderad",
+      "channelUpdated": "Kanal ändrad",
+      "roleCreated": "Roll skapad",
+      "roleDeleted": "Roll raderad",
+      "roleUpdated": "Roll ändrad",
+      "serverUpdated": "Servern ändrad",
+      "emojiCreated": "Emoji tillagd",
+      "emojiDeleted": "Emoji borttagen"
+    },
+    "fields": {
+      "author": "Avsändare",
+      "channel": "Kanal",
+      "before": "Före",
+      "after": "Efter",
+      "content": "Innehåll",
+      "attachments": "Bilagor",
+      "user": "Användare",
+      "accountCreated": "Konto skapat",
+      "joined": "Gick med",
+      "roles": "Roller",
+      "added": "Tillagda",
+      "removed": "Borttagna",
+      "by": "Av",
+      "reason": "Anledning",
+      "until": "Till",
+      "name": "Namn",
+      "from": "Från",
+      "to": "Till",
+      "changes": "Ändringar"
+    },
+    "noContent": "(ingen text)",
+    "notCached": "(okänt innehåll – meddelandet är äldre än botens cache)",
+    "jump": "Gå till meddelandet",
+    "memberNumber": "Medlem nr {{n}}",
+    "newAccount": "⚠️ Nytt konto ({{age}})",
+    "none": "—"
+  },
+  "commands": {
+    "rank": {
+      "description": "Visa level och XP",
+      "options": {
+        "user": {
+          "name": "användare",
+          "description": "Vems rank?"
+        }
+      }
+    },
+    "leaderboard": {
+      "description": "Visa serverns topplista",
+      "options": {
+        "page": {
+          "name": "sida",
+          "description": "Sida"
+        }
+      }
+    },
+    "warn": {
+      "description": "Varna en medlem",
+      "options": {
+        "user": {
+          "name": "användare",
+          "description": "Medlem"
+        },
+        "reason": {
+          "name": "anledning",
+          "description": "Anledning"
+        }
+      }
+    },
+    "timeout": {
+      "description": "Sätt en medlem i timeout",
+      "options": {
+        "user": {
+          "name": "användare",
+          "description": "Medlem"
+        },
+        "duration": {
+          "name": "tid",
+          "description": "t.ex. 10m, 2h, 1d (max 28d)"
+        },
+        "reason": {
+          "name": "anledning",
+          "description": "Anledning"
+        }
+      }
+    },
+    "kick": {
+      "description": "Kicka en medlem",
+      "options": {
+        "user": {
+          "name": "användare",
+          "description": "Medlem"
+        },
+        "reason": {
+          "name": "anledning",
+          "description": "Anledning"
+        }
+      }
+    },
+    "ban": {
+      "description": "Banna en användare, permanent eller en tid",
+      "options": {
+        "user": {
+          "name": "användare",
+          "description": "Användare"
+        },
+        "duration": {
+          "name": "tid",
+          "description": "Tillfällig ban, t.ex. 1d eller 2w. Tomt = permanent"
+        },
+        "delete_days": {
+          "name": "radera_dagar",
+          "description": "Radera meddelanden från senaste X dagar (0-7)"
+        },
+        "reason": {
+          "name": "anledning",
+          "description": "Anledning"
+        }
+      }
+    },
+    "unban": {
+      "description": "Häv en ban",
+      "options": {
+        "user_id": {
+          "name": "användar_id",
+          "description": "Användar-ID"
+        },
+        "reason": {
+          "name": "anledning",
+          "description": "Anledning"
+        }
+      }
+    },
+    "purge": {
+      "description": "Radera meddelanden i kanalen",
+      "options": {
+        "amount": {
+          "name": "antal",
+          "description": "1-100"
+        },
+        "user": {
+          "name": "användare",
+          "description": "Bara meddelanden från denna användare"
+        }
+      }
+    },
+    "cases": {
+      "description": "Visa en användares moderationshistorik",
+      "options": {
+        "user": {
+          "name": "användare",
+          "description": "Användare"
+        }
+      }
+    },
+    "voice": {
+      "description": "Hantera din tillfälliga röstkanal",
+      "subcommands": {
+        "name": {
+          "name": "namn",
+          "description": "Byt namn på kanalen"
+        },
+        "limit": {
+          "name": "gräns",
+          "description": "Sätt max antal (0 = obegränsat)"
+        },
+        "lock": {
+          "name": "lås",
+          "description": "Lås kanalen"
+        },
+        "unlock": {
+          "name": "lås_upp",
+          "description": "Lås upp kanalen"
+        },
+        "claim": {
+          "name": "ta_över",
+          "description": "Ta över kanalen om ägaren har gått"
+        }
+      },
+      "options": {
+        "name": {
+          "name": "namn",
+          "description": "Nytt namn"
+        },
+        "amount": {
+          "name": "antal",
+          "description": "0-99"
+        }
+      }
+    }
+  },
+  "errors": {
+    "invalidId": "Ogiltigt Discord-ID",
+    "notLoggedIn": "Inte inloggad",
+    "sessionExpired": "Sessionen har gått ut",
+    "botNotInGuild": "Boten finns inte på servern",
+    "needManageGuild": "Du behöver behörigheten Hantera server",
+    "notFound": "Hittades inte",
+    "unknownModule": "Okänd modul",
+    "invalidValues": "Ogiltiga värden",
+    "serverError": "Serverfel",
+    "discordGuilds": "Kunde inte hämta dina servrar från Discord",
+    "loginFailed": "Discord-inloggningen misslyckades, försök igen.",
+    "mee6NotPublic": "MEE6-leaderboarden är inte publik. Slå på “Make my server's leaderboard public” i MEE6 och försök igen.",
+    "mee6NotFound": "MEE6 hittade ingen leaderboard för den här servern.",
+    "mee6Status": "MEE6 svarade med status {{status}}",
+    "mee6RateLimited": "MEE6 begränsade oss för många gånger, försök igen om en stund.",
+    "mee6Unreachable": "Kunde inte nå MEE6. Kontrollera att servern har internetåtkomst och försök igen.",
+    "builtinCommand": "/{{name}} är ett inbyggt kommando, välj ett annat namn.",
+    "commandExists": "/{{name}} finns redan",
+    "commandName": "Endast a-z, 0-9, - och _ (max 32 tecken)",
+    "invalidSchedule": "Ogiltigt schema: {{detail}}",
+    "botCannotWrite": "Boten kan inte skriva i kanalen",
+    "xpOrLevel": "Ange XP eller level",
+    "messageNotFound": "Hittade inte meddelandet",
+    "missingPermission": "Boten saknar behörigheten {{permission}}",
+    "roleTooHigh": "Rollen {{role}} ligger över botens högsta roll",
+    "dmClosed": "Användaren tar inte emot DM"
+  }
+}

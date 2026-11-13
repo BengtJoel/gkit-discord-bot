@@ -6,14 +6,18 @@ import { api, avatarUrl, fmtHours, fmtNum } from "../lib/api";
 import { useGuild } from "../lib/guild";
 import { Card, PageHeader, Segmented, Spinner, Empty } from "../components/ui";
 import { Heatmap, PairBars, Stat, TrendChart } from "../components/charts";
+import { useT } from "../lib/i18n";
 
-export const PERIODS = [
-  { value: "7", label: "7 dagar" },
-  { value: "30", label: "30 dagar" },
-  { value: "90", label: "90 dagar" },
-  { value: "365", label: "1 år" },
-] as const;
-export type Period = (typeof PERIODS)[number]["value"];
+export type Period = "7" | "30" | "90" | "365";
+export function usePeriods() {
+  const { t } = useT();
+  return [
+    { value: "7" as Period, label: t("dash.periods.days", { count: 7 }) },
+    { value: "30" as Period, label: t("dash.periods.days", { count: 30 }) },
+    { value: "90" as Period, label: t("dash.periods.days", { count: 90 }) },
+    { value: "365" as Period, label: t("dash.periods.year") },
+  ];
+}
 
 interface OverviewData {
   from: string;
@@ -28,6 +32,8 @@ interface OverviewData {
 
 export function Overview() {
   const g = useGuild();
+  const { t } = useT();
+  const periods = usePeriods();
   const [days, setDays] = useState<Period>("30");
   const [heat, setHeat] = useState<"messages" | "voice_seconds">("messages");
   const q = useQuery({ queryKey: ["overview", g.id, days], queryFn: () => api<OverviewData>(`/guilds/${g.id}/reports/overview?days=${days}`) });
@@ -38,14 +44,14 @@ export function Overview() {
   return (
     <div>
       <PageHeader
-        title="Översikt"
+        title={t("dash.overview.title")}
         icon={<BarChart3 className="size-5" />}
-        description="Aktivitet på servern: meddelanden, röst, medlemsflöde och när folk är aktiva."
-        actions={<Segmented value={days} onChange={setDays} options={[...PERIODS]} />}
+        description={t("dash.overview.description")}
+        actions={<Segmented value={days} onChange={setDays} options={periods} />}
       />
       {!g.modules.activity.enabled && (
         <div className="mb-5 rounded-lg border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-amber-200">
-          Aktivitetsspårning är avstängd. Slå på den under <Link to="../settings" className="underline">Inställningar</Link> för att samla in data.
+          {t("dash.overview.trackingOff")} <Link to="../settings" className="underline">{t("dash.nav.settings")}</Link>
         </div>
       )}
       {q.isLoading || !d ? (
@@ -53,40 +59,40 @@ export function Overview() {
       ) : (
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <Stat label="Meddelanden" value={fmtNum(d.totals.messages)} sub={`${fmtNum(Math.round(d.totals.messages / d.series.length))} per dag`} />
-            <Stat label="Tid i röst" value={fmtHours(d.totals.voice_seconds)} />
-            <Stat label="Aktiva medlemmar" value={fmtNum(d.totals.active_users)} sub={d.memberCount ? `av ${fmtNum(d.memberCount)}` : undefined} />
-            <Stat label="Nya medlemmar" value={`+${fmtNum(d.totals.joins)}`} sub={`${fmtNum(d.totals.leaves)} lämnade`} />
-            <Stat label="Moderering" value={fmtNum(d.totals.mod_actions)} sub="åtgärder och automod" />
+            <Stat label={t("dash.overview.messages")} value={fmtNum(d.totals.messages)} sub={t("dash.overview.perDay", { n: fmtNum(Math.round(d.totals.messages / d.series.length)) })} />
+            <Stat label={t("dash.overview.voiceTime")} value={fmtHours(d.totals.voice_seconds)} />
+            <Stat label={t("dash.overview.activeMembers")} value={fmtNum(d.totals.active_users)} sub={d.memberCount ? t("dash.overview.ofTotal", { n: fmtNum(d.memberCount) }) : undefined} />
+            <Stat label={t("dash.overview.newMembers")} value={`+${fmtNum(d.totals.joins)}`} sub={t("dash.overview.left", { n: fmtNum(d.totals.leaves) })} />
+            <Stat label={t("dash.overview.moderation")} value={fmtNum(d.totals.mod_actions)} sub={t("dash.overview.moderationSub")} />
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card title="Meddelanden per dag">
-              <TrendChart data={d.series} dataKey="messages" name="Meddelanden" />
+            <Card title={t("dash.overview.messagesPerDay")}>
+              <TrendChart data={d.series} dataKey="messages" name={t("dash.overview.messages")} />
             </Card>
-            <Card title="Aktiva medlemmar per dag" description="Skrev eller satt i röst minst en gång">
-              <TrendChart data={d.series} dataKey="active_users" name="Aktiva" />
+            <Card title={t("dash.overview.activePerDay")} description={t("dash.overview.activePerDayHint")}>
+              <TrendChart data={d.series} dataKey="active_users" name={t("dash.overview.active")} />
             </Card>
-            <Card title="Timmar i röstkanaler per dag">
-              <TrendChart data={voiceSeries!} dataKey="voice_hours" name="Röst" format={(v) => `${v.toLocaleString("sv-SE")} h`} />
+            <Card title={t("dash.overview.voicePerDay")}>
+              <TrendChart data={voiceSeries!} dataKey="voice_hours" name={t("dash.overview.voice")} format={(v) => `${fmtNum(v)} h`} />
             </Card>
-            <Card title="Medlemsflöde">
-              <PairBars data={d.series} a={{ key: "joins", name: "Gick med" }} b={{ key: "leaves", name: "Lämnade" }} />
+            <Card title={t("dash.overview.memberFlow")}>
+              <PairBars data={d.series} a={{ key: "joins", name: t("dash.overview.joined") }} b={{ key: "leaves", name: t("dash.overview.leftLabel") }} />
             </Card>
           </div>
 
           <Card
-            title="När är servern aktiv?"
-            description="Veckodag × timme (svensk tid)"
-            actions={<Segmented value={heat} onChange={setHeat} options={[{ value: "messages", label: "Meddelanden" }, { value: "voice_seconds", label: "Röst" }]} />}
+            title={t("dash.overview.whenActive")}
+            description={t("dash.overview.whenActiveHint")}
+            actions={<Segmented value={heat} onChange={setHeat} options={[{ value: "messages", label: t("dash.overview.messages") }, { value: "voice_seconds", label: t("dash.overview.voice") }]} />}
           >
             <Heatmap cells={d.heatmap} metric={heat} />
           </Card>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card title="Mest aktiva medlemmar" actions={<Link to="../members" className="text-[13px] text-accent-2 hover:underline">Visa alla</Link>} padded={false}>
+            <Card title={t("dash.overview.topMembers")} actions={<Link to="../members" className="text-[13px] text-accent-2 hover:underline">{t("dash.common.showAll")}</Link>} padded={false}>
               {d.topMembers.length === 0 ? (
-                <Empty title="Ingen aktivitet ännu" />
+                <Empty title={t("dash.overview.noActivity")} />
               ) : (
                 <ul className="divide-y divide-line">
                   {d.topMembers.map((m, i) => (
@@ -94,16 +100,16 @@ export function Overview() {
                       <span className="w-4 text-sm text-faint tabular-nums">{i + 1}</span>
                       <img src={avatarUrl(m.user_id, m.avatar)} className="size-7 rounded-full" alt="" />
                       <span className="flex-1 truncate text-sm">{m.display_name || m.user_id}</span>
-                      <span className="text-sm text-muted tabular-nums">{fmtNum(m.messages)} medd.</span>
+                      <span className="text-sm text-muted tabular-nums">{t("dash.overview.msgShort", { n: fmtNum(m.messages) })}</span>
                       <span className="w-16 text-right text-sm text-muted tabular-nums">{fmtHours(m.voice_seconds)}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </Card>
-            <Card title="Mest aktiva kanaler" padded={false}>
+            <Card title={t("dash.overview.topChannels")} padded={false}>
               {d.topChannels.length === 0 ? (
-                <Empty title="Ingen aktivitet ännu" />
+                <Empty title={t("dash.overview.noActivity")} />
               ) : (
                 <ul className="divide-y divide-line">
                   {d.topChannels.map((c) => {
@@ -112,8 +118,8 @@ export function Overview() {
                     return (
                       <li key={c.channel_id} className="flex items-center gap-3 px-5 py-2.5">
                         {voice ? <Volume2 className="size-4 text-muted" /> : <Hash className="size-4 text-muted" />}
-                        <span className="flex-1 truncate text-sm">{ch?.name ?? "borttagen kanal"}</span>
-                        <span className="text-sm text-muted tabular-nums">{voice ? fmtHours(c.voice_seconds) : `${fmtNum(c.messages)} medd.`}</span>
+                        <span className="flex-1 truncate text-sm">{ch?.name ?? t("dash.common.deletedChannel")}</span>
+                        <span className="text-sm text-muted tabular-nums">{voice ? fmtHours(c.voice_seconds) : t("dash.overview.msgShort", { n: fmtNum(c.messages) })}</span>
                       </li>
                     );
                   })}

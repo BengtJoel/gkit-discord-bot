@@ -2,12 +2,16 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "./db/index.js";
 
-const snowflake = z.string().regex(/^\d{15,22}$/, "Ogiltigt Discord-ID");
+const snowflake = z.string().regex(/^\d{15,22}$/, "errors.invalidId");
 const optSnowflake = snowflake.nullable().default(null);
 const ids = z.array(snowflake).default([]);
 const automodAction = z.enum(["delete", "delete_warn", "delete_timeout"]).default("delete");
 
 export const moduleSchemas = {
+  general: z.object({
+    /** "auto" follows the server's Discord language (Community servers) and falls back to English */
+    language: z.enum(["auto", "en", "sv"]).default("auto"),
+  }),
   levels: z.object({
     xpMin: z.number().int().min(0).max(1000).default(15),
     xpMax: z.number().int().min(0).max(1000).default(25),
@@ -17,7 +21,8 @@ export const moduleSchemas = {
       .object({
         mode: z.enum(["current", "channel", "dm", "off"]).default("current"),
         channelId: optSnowflake,
-        message: z.string().max(2000).default("GG {user}, du nådde **level {level}**! 🎉"),
+        /** Empty = the localized default (defaults.levelUp) in the server language */
+        message: z.string().max(2000).default(""),
       })
       .prefault({}),
     noXpChannelIds: ids,
@@ -25,29 +30,33 @@ export const moduleSchemas = {
     roleRewards: z.array(z.object({ level: z.number().int().min(1).max(1000), roleId: snowflake })).default([]),
     /** true: keep all earlier reward roles. false: only keep the highest one. */
     stackRewards: z.boolean().default(true),
+    /** Remove reward roles again if a member drops below the level (XP removed by an admin) */
+    removeOnDemote: z.boolean().default(true),
   }),
   welcome: z.object({
     join: z
       .object({
         enabled: z.boolean().default(true),
         channelId: optSnowflake,
-        message: z.string().max(2000).default("Välkommen {user} till **{server}**! Du är medlem nummer {membercount}."),
+        message: z.string().max(2000).default(""),
       })
       .prefault({}),
     dm: z
-      .object({ enabled: z.boolean().default(false), message: z.string().max(2000).default("Välkommen till {server}!") })
+      .object({ enabled: z.boolean().default(false), message: z.string().max(2000).default("") })
       .prefault({}),
     leave: z
       .object({
         enabled: z.boolean().default(false),
         channelId: optSnowflake,
-        message: z.string().max(2000).default("**{username}** lämnade servern."),
+        message: z.string().max(2000).default(""),
       })
       .prefault({}),
     autoRoleIds: ids,
   }),
   moderation: z.object({
     logChannelId: optSnowflake,
+    /** Members with any of these roles can't be warned, timed out, kicked or banned by the bot */
+    immuneRoleIds: ids,
     dmOnAction: z.boolean().default(true),
     /** Automatic escalation when a user reaches N warnings */
     warnThresholds: z
@@ -94,7 +103,7 @@ export const moduleSchemas = {
   tempVoice: z.object({
     hubChannelIds: ids,
     categoryId: optSnowflake,
-    nameTemplate: z.string().min(1).max(100).default("{user}s kanal"),
+    nameTemplate: z.string().max(100).default(""),
     userLimit: z.number().int().min(0).max(99).default(0),
   }),
   activity: z.object({
@@ -102,6 +111,22 @@ export const moduleSchemas = {
     trackVoice: z.boolean().default(true),
     ignoredChannelIds: ids,
     inactiveDays: z.number().int().min(1).max(365).default(30),
+  }),
+  serverLog: z.object({
+    /** One channel per category; null = that category is not logged */
+    channels: z
+      .object({
+        messages: optSnowflake,
+        members: optSnowflake,
+        roles: optSnowflake,
+        voice: optSnowflake,
+        channels: optSnowflake,
+        server: optSnowflake,
+        moderation: optSnowflake,
+      })
+      .prefault({}),
+    ignoredChannelIds: ids,
+    ignoreBots: z.boolean().default(true),
   }),
   reactionRoles: z.object({}),
   customCommands: z.object({}),
@@ -113,7 +138,7 @@ export type ModuleConfig<M extends ModuleName> = z.infer<(typeof moduleSchemas)[
 export const moduleNames = Object.keys(moduleSchemas) as ModuleName[];
 
 /** Modules that are on by default when the bot joins a server */
-const defaultEnabled: Partial<Record<ModuleName, boolean>> = { activity: true, moderation: true };
+const defaultEnabled: Partial<Record<ModuleName, boolean>> = { general: true, activity: true, moderation: true };
 
 export function isModule(name: string): name is ModuleName {
   return name in moduleSchemas;

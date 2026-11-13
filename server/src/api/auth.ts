@@ -5,6 +5,7 @@ import { PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import { db, schema } from "../db/index.js";
 import { env, ownerIds, botEnabled } from "../env.js";
 import { client } from "../bot/client.js";
+import { apiError, ApiError } from "./errors.js";
 
 const DISCORD = "https://discord.com/api/v10";
 const COOKIE = "gb_sid";
@@ -32,6 +33,7 @@ export const botPermissions = new PermissionsBitField([
   PermissionFlagsBits.ModerateMembers,
   PermissionFlagsBits.MoveMembers,
   PermissionFlagsBits.Connect,
+  PermissionFlagsBits.ViewAuditLog,
 ]).bitfield;
 
 export function inviteUrl(guildId?: string) {
@@ -63,7 +65,7 @@ export async function userGuilds(s: Session): Promise<DiscordGuild[]> {
   if (hit && Date.now() - hit.at < 60_000) return hit.guilds;
   const res = await fetch(`${DISCORD}/users/@me/guilds`, { headers: { Authorization: `Bearer ${s.accessToken}` } });
   if (res.status === 429 && hit) return hit.guilds;
-  if (!res.ok) throw Object.assign(new Error("Kunde inte hämta servrar från Discord"), { statusCode: res.status === 401 ? 401 : 502 });
+  if (!res.ok) throw new ApiError(res.status === 401 ? 401 : 502, "errors.discordGuilds");
   const guilds = (await res.json()) as DiscordGuild[];
   guildCache.set(s.id, { at: Date.now(), guilds });
   return guilds;
@@ -91,9 +93,9 @@ export async function manageableGuilds(s: Session) {
 export async function requireSession(req: FastifyRequest, reply: FastifyReply) {
   const raw = req.cookies[COOKIE];
   const unsigned = raw ? req.unsignCookie(raw) : null;
-  if (!unsigned?.valid || !unsigned.value) return reply.code(401).send({ error: "Inte inloggad" });
+  if (!unsigned?.valid || !unsigned.value) return apiError(reply, 401, "errors.notLoggedIn");
   const [s] = await db.select().from(schema.sessions).where(eq(schema.sessions.id, unsigned.value));
-  if (!s || s.expiresAt < new Date()) return reply.code(401).send({ error: "Sessionen har gått ut" });
+  if (!s || s.expiresAt < new Date()) return apiError(reply, 401, "errors.sessionExpired");
   req.session = s;
 }
 
@@ -103,11 +105,11 @@ export async function requireGuildAccess(req: FastifyRequest<{ Params: { guildId
   if (reply.sent) return;
   const s = req.session!;
   const { guildId } = req.params;
-  if (botEnabled && !client.guilds.cache.has(guildId)) return reply.code(404).send({ error: "Boten finns inte på servern", inviteUrl: inviteUrl(guildId) });
+  if (botEnabled && !client.guilds.cache.has(guildId)) return apiError(reply, 404, "errors.botNotInGuild", undefined, { inviteUrl: inviteUrl(guildId) });
   if (ownerIds.has(s.userId)) return;
   const guilds = await userGuilds(s);
   const g = guilds.find((x) => x.id === guildId);
-  if (!g || !canManage(g)) return reply.code(403).send({ error: "Du behöver Hantera server-behörighet" });
+  if (!g || !canManage(g)) return apiError(reply, 403, "errors.needManageGuild");
 }
 
 export function registerAuth(app: FastifyInstance) {
@@ -128,7 +130,7 @@ export function registerAuth(app: FastifyInstance) {
   app.get<{ Querystring: { code?: string; state?: string } }>("/api/auth/callback", async (req, reply) => {
     const { code, state } = req.query;
     const stateCookie = req.cookies.gb_state ? req.unsignCookie(req.cookies.gb_state) : null;
-    if (!code || !state || !stateCookie?.valid || stateCookie.value !== state) return reply.code(400).send("Ogiltig inloggning, försök igen.");
+    if (!code || !state || !stateCookie?.valid || stateCookie.value !== state) return reply.redirect("/?login_error=1");
     reply.clearCookie("gb_state", { path: "/" });
 
     const tokenRes = await fetch(`${DISCORD}/oauth2/token`, {
@@ -142,7 +144,7 @@ export function registerAuth(app: FastifyInstance) {
         redirect_uri: redirectUri(),
       }),
     });
-    if (!tokenRes.ok) return reply.code(400).send("Discord-inloggningen misslyckades.");
+    if (!tokenRes.ok) return reply.redirect("/?login_error=1");
     const token = (await tokenRes.json()) as { access_token: string; expires_in: number };
     const meRes = await fetch(`${DISCORD}/users/@me`, { headers: { Authorization: `Bearer ${token.access_token}` } });
     const me = (await meRes.json()) as { id: string; username: string; global_name?: string; avatar: string | null };

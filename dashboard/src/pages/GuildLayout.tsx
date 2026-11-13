@@ -17,47 +17,52 @@ import {
   Settings,
   ChevronsUpDown,
   Menu,
+  FileClock,
 } from "lucide-react";
 import { useGuildQuery, GuildProvider } from "../lib/guild";
 import { ApiError } from "../lib/api";
 import type { ModuleName } from "../lib/types";
 import { LoginScreen, GuildIcon, useMe } from "./ServerPicker";
 import { Spinner } from "../components/ui";
+import { useT, type TKey } from "../lib/i18n";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
-type NavItem = { to: string; label: string; icon: React.ElementType; module?: ModuleName };
-const sections: { title: string; items: NavItem[] }[] = [
+type NavItem = { to: string; label: TKey; icon: React.ElementType; module?: ModuleName };
+const sections: { title: TKey; items: NavItem[] }[] = [
   {
-    title: "Rapporter",
+    title: "dash.nav.reports",
     items: [
-      { to: "", label: "Översikt", icon: BarChart3 },
-      { to: "members", label: "Medlemmar", icon: Users },
-      { to: "events", label: "Händelselogg", icon: ScrollText },
+      { to: "", label: "dash.nav.overview", icon: BarChart3 },
+      { to: "members", label: "dash.nav.members", icon: Users },
+      { to: "events", label: "dash.nav.events", icon: ScrollText },
     ],
   },
   {
-    title: "Moduler",
+    title: "dash.nav.modules",
     items: [
-      { to: "levels", label: "Levels", icon: TrendingUp, module: "levels" },
-      { to: "welcome", label: "Välkomst", icon: DoorOpen, module: "welcome" },
-      { to: "reaction-roles", label: "Reaction roles", icon: SmilePlus, module: "reactionRoles" },
-      { to: "moderation", label: "Moderering", icon: Gavel, module: "moderation" },
-      { to: "automod", label: "Automod", icon: ShieldCheck, module: "automod" },
-      { to: "commands", label: "Egna kommandon", icon: TerminalSquare, module: "customCommands" },
-      { to: "timers", label: "Schemalagda meddelanden", icon: Clock, module: "timers" },
-      { to: "voice", label: "Skapa en kanal", icon: Mic, module: "tempVoice" },
+      { to: "levels", label: "dash.nav.levels", icon: TrendingUp, module: "levels" },
+      { to: "welcome", label: "dash.nav.welcome", icon: DoorOpen, module: "welcome" },
+      { to: "reaction-roles", label: "dash.nav.reactionRoles", icon: SmilePlus, module: "reactionRoles" },
+      { to: "moderation", label: "dash.nav.moderation", icon: Gavel, module: "moderation" },
+      { to: "automod", label: "dash.nav.automod", icon: ShieldCheck, module: "automod" },
+      { to: "server-log", label: "dash.nav.serverLog", icon: FileClock, module: "serverLog" },
+      { to: "commands", label: "dash.nav.commands", icon: TerminalSquare, module: "customCommands" },
+      { to: "timers", label: "dash.nav.timers", icon: Clock, module: "timers" },
+      { to: "voice", label: "dash.nav.tempVoice", icon: Mic, module: "tempVoice" },
     ],
   },
   {
-    title: "Server",
+    title: "dash.nav.server",
     items: [
-      { to: "import", label: "Importera från MEE6", icon: Download },
-      { to: "settings", label: "Inställningar", icon: Settings },
+      { to: "import", label: "dash.nav.import", icon: Download },
+      { to: "settings", label: "dash.nav.settings", icon: Settings },
     ],
   },
 ];
 
 export function GuildLayout() {
   const { guildId = "" } = useParams();
+  const { t } = useT();
   const q = useGuildQuery(guildId);
   const me = useMe();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -68,27 +73,28 @@ export function GuildLayout() {
     return (
       <div className="grid min-h-full place-items-center p-6 text-center">
         <div>
-          <p className="text-muted">{q.error?.message ?? "Kunde inte ladda servern"}</p>
-          <Link to="/" className="mt-4 inline-block text-accent-2 hover:underline">Tillbaka till serverlistan</Link>
+          <p className="text-muted">{q.error?.message ?? t("dash.common.loadGuildFailed")}</p>
+          <Link to="/" className="mt-4 inline-block text-accent-2 hover:underline">{t("dash.common.backToServers")}</Link>
         </div>
       </div>
     );
 
   const g = q.data;
+  const name = g.name ?? t("dash.common.devMode");
   const sidebar = (
     <nav className="flex h-full flex-col">
       <Link to="/" className="m-3 flex items-center gap-3 rounded-lg border border-line bg-panel-2/50 p-2.5 transition hover:border-line-2">
-        <GuildIcon id={g.id} icon={g.icon} name={g.name} size={34} />
+        <GuildIcon id={g.id} icon={g.icon} name={name} size={34} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">{g.name}</div>
-          <div className="text-xs text-muted">{g.memberCount.toLocaleString("sv-SE")} medlemmar</div>
+          <div className="truncate text-sm font-semibold">{name}</div>
+          <div className="text-xs text-muted">{t("dash.common.memberCount", { count: g.memberCount, n: g.memberCount.toLocaleString() })}</div>
         </div>
         <ChevronsUpDown className="size-4 text-muted" />
       </Link>
       <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
         {sections.map((s) => (
           <div key={s.title}>
-            <div className="px-2 pb-1.5 text-[11px] font-semibold tracking-wider text-faint uppercase">{s.title}</div>
+            <div className="px-2 pb-1.5 text-[11px] font-semibold tracking-wider text-faint uppercase">{t(s.title)}</div>
             {s.items.map((it) => {
               const on = it.module ? g.modules[it.module]?.enabled : undefined;
               return (
@@ -105,19 +111,18 @@ export function GuildLayout() {
                   }
                 >
                   <it.icon className="size-4 shrink-0" />
-                  <span className="flex-1 truncate">{it.label}</span>
-                  {on !== undefined && <span className={clsx("size-1.5 rounded-full", on ? "bg-ok" : "bg-line-2")} title={on ? "På" : "Av"} />}
+                  <span className="flex-1 truncate">{t(it.label)}</span>
+                  {on !== undefined && <span className={clsx("size-1.5 rounded-full", on ? "bg-ok" : "bg-line-2")} title={on ? t("dash.module.on") : t("dash.module.off")} />}
                 </NavLink>
               );
             })}
           </div>
         ))}
       </div>
-      {me.data && (
-        <div className="flex items-center gap-2 border-t border-line px-4 py-3 text-xs text-muted">
-          <span className="truncate">Inloggad som {me.data.user.username}</span>
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-3 text-xs text-muted">
+        <span className="truncate">{me.data ? t("dash.common.loggedInAs", { name: me.data.user.username }) : ""}</span>
+        <LanguageSwitcher compact />
+      </div>
     </nav>
   );
 
@@ -134,10 +139,10 @@ export function GuildLayout() {
         )}
         <main className="min-w-0 flex-1 lg:pl-64">
           <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-bg/80 px-4 py-3 backdrop-blur lg:hidden">
-            <button onClick={() => setMobileOpen(true)} className="text-muted">
+            <button onClick={() => setMobileOpen(true)} className="text-muted" aria-label={t("dash.common.menu")}>
               <Menu className="size-5" />
             </button>
-            <span className="font-medium">{g.name}</span>
+            <span className="font-medium">{name}</span>
           </div>
           <div className="mx-auto max-w-6xl px-5 py-8 lg:px-10">
             <Outlet />

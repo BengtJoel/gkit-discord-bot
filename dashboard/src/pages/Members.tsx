@@ -6,7 +6,8 @@ import { api, avatarUrl, fmtDate, fmtDateTime, fmtHours, fmtNum, timeAgo } from 
 import { useGuild } from "../lib/guild";
 import { Badge, Button, Card, Drawer, Empty, PageHeader, Segmented, Spinner } from "../components/ui";
 import { TrendChart } from "../components/charts";
-import { PERIODS, type Period } from "./Overview";
+import { usePeriods, type Period } from "./Overview";
+import { useT, type TKey } from "../lib/i18n";
 import { eventLabel } from "./EventLog";
 
 interface Row {
@@ -25,18 +26,20 @@ interface Row {
   xp: number;
 }
 
-const COLS: { key: string; label: string; align?: "right" }[] = [
-  { key: "name", label: "Medlem" },
-  { key: "messages", label: "Meddelanden", align: "right" },
-  { key: "voice", label: "Röst", align: "right" },
-  { key: "reactions", label: "Reaktioner", align: "right" },
-  { key: "activeDays", label: "Aktiva dagar", align: "right" },
-  { key: "lastSeen", label: "Senast aktiv", align: "right" },
-  { key: "joined", label: "Gick med", align: "right" },
+const COLS: { key: string; label: TKey; align?: "right" }[] = [
+  { key: "name", label: "dash.members.cols.member" },
+  { key: "messages", label: "dash.members.cols.messages", align: "right" },
+  { key: "voice", label: "dash.members.cols.voice", align: "right" },
+  { key: "reactions", label: "dash.members.cols.reactions", align: "right" },
+  { key: "activeDays", label: "dash.members.cols.activeDays", align: "right" },
+  { key: "lastSeen", label: "dash.members.cols.lastSeen", align: "right" },
+  { key: "joined", label: "dash.members.cols.joined", align: "right" },
 ];
 
 export function Members() {
   const g = useGuild();
+  const { t, lang } = useT();
+  const periods = usePeriods();
   const [days, setDays] = useState<Period>("30");
   const [status, setStatus] = useState<"current" | "inactive" | "left" | "all">("current");
   const [sort, setSort] = useState("messages");
@@ -71,32 +74,32 @@ export function Members() {
   return (
     <div>
       <PageHeader
-        title="Medlemmar"
+        title={t("dash.members.title")}
         icon={<Users className="size-5" />}
-        description={`Aktivitet per medlem. "Inaktiva" = inte skrivit eller suttit i röst på ${g.modules.activity.config.inactiveDays} dagar (ändras under Inställningar).`}
+        description={t("dash.members.description", { days: g.modules.activity.config.inactiveDays })}
         actions={
-          <a href={`/api/guilds/${g.id}/reports/members.csv?${params}`}>
-            <Button icon={<Download className="size-4" />}>Exportera CSV</Button>
+          <a href={`/api/guilds/${g.id}/reports/members.csv?${params}&lang=${lang}`}>
+            <Button icon={<Download className="size-4" />}>{t("dash.members.exportCsv")}</Button>
           </a>
         }
       />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative w-64">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-          <input className="input pl-9" placeholder="Sök namn eller ID…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="input pl-9" placeholder={t("dash.members.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Segmented
           value={status}
           onChange={setStatus}
           options={[
-            { value: "current", label: "Nuvarande" },
-            { value: "inactive", label: "Inaktiva" },
-            { value: "left", label: "Har lämnat" },
-            { value: "all", label: "Alla" },
+            { value: "current", label: t("dash.members.status.current") },
+            { value: "inactive", label: t("dash.members.status.inactive") },
+            { value: "left", label: t("dash.members.status.left") },
+            { value: "all", label: t("dash.members.status.all") },
           ]}
         />
         <div className="ml-auto">
-          <Segmented value={days} onChange={setDays} options={[...PERIODS]} />
+          <Segmented value={days} onChange={setDays} options={periods} />
         </div>
       </div>
 
@@ -108,7 +111,7 @@ export function Members() {
                 {COLS.map((c) => (
                   <th key={c.key} className={clsx("px-4 py-2.5 font-medium whitespace-nowrap", c.align === "right" && "text-right")}>
                     <button onClick={() => toggleSort(c.key)} className={clsx("inline-flex items-center gap-1 hover:text-fg", sort === c.key && "text-fg")}>
-                      {c.label}
+                      {t(c.label)}
                       {sort === c.key && (dir === "desc" ? <ArrowDown className="size-3" /> : <ArrowUp className="size-3" />)}
                     </button>
                   </th>
@@ -125,7 +128,7 @@ export function Members() {
                         <div className="truncate font-medium">{r.display_name || r.username || r.user_id}</div>
                         {r.username && r.username !== r.display_name && <div className="truncate text-xs text-muted">@{r.username}</div>}
                       </div>
-                      {r.left_at && <Badge tone="bad">Lämnat</Badge>}
+                      {r.left_at && <Badge tone="bad">{t("dash.members.leftBadge")}</Badge>}
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{fmtNum(r.messages)}</td>
@@ -141,16 +144,14 @@ export function Members() {
             </tbody>
           </table>
           {q.isLoading && <div className="grid h-40 place-items-center"><Spinner /></div>}
-          {q.data && q.data.rows.length === 0 && <Empty icon={<Users className="size-5" />} title="Inga medlemmar matchar" />}
+          {q.data && q.data.rows.length === 0 && <Empty icon={<Users className="size-5" />} title={t("dash.members.noMatch")} />}
         </div>
         {total > 50 && (
           <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm text-muted">
-            <span>
-              {page * 50 + 1}–{Math.min((page + 1) * 50, total)} av {fmtNum(total)}
-            </span>
+            <span>{t("dash.common.range", { from: page * 50 + 1, to: Math.min((page + 1) * 50, total), total: fmtNum(total) })}</span>
             <div className="flex gap-2">
-              <Button size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Föregående</Button>
-              <Button size="sm" disabled={(page + 1) * 50 >= total} onClick={() => setPage(page + 1)}>Nästa</Button>
+              <Button size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>{t("dash.common.previous")}</Button>
+              <Button size="sm" disabled={(page + 1) * 50 >= total} onClick={() => setPage(page + 1)}>{t("dash.common.next")}</Button>
             </div>
           </div>
         )}
@@ -172,6 +173,7 @@ interface MemberDetail {
 
 function MemberDrawer({ userId, days, onClose }: { userId: string | null; days: string; onClose: () => void }) {
   const g = useGuild();
+  const { t } = useT();
   const q = useQuery({
     enabled: !!userId,
     queryKey: ["member", g.id, userId, days],
@@ -182,7 +184,7 @@ function MemberDrawer({ userId, days, onClose }: { userId: string | null; days: 
   const chanName = (id: string | null) => (id ? g.channels.find((c) => c.id === id)?.name : null);
 
   return (
-    <Drawer open={!!userId} onClose={onClose} title="Medlem">
+    <Drawer open={!!userId} onClose={onClose} title={t("dash.members.drawerTitle")}>
       {!d ? (
         <div className="grid h-40 place-items-center"><Spinner /></div>
       ) : (
@@ -207,24 +209,24 @@ function MemberDrawer({ userId, days, onClose }: { userId: string | null; days: 
             </div>
           )}
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <Info label="Gick med" value={fmtDate(d.member.joined_at)} />
-            <Info label="Senaste meddelande" value={timeAgo(d.member.last_message_at)} />
-            <Info label="Senast i röst" value={timeAgo(d.member.last_voice_at)} />
-            <Info label="Level" value={d.level ? `${d.level.level} (${fmtNum(d.level.xp)} XP)` : "—"} />
-            <Info label={`Meddelanden (${days} d)`} value={fmtNum(totals?.m)} />
-            <Info label={`Röst (${days} d)`} value={fmtHours(totals?.v ?? 0)} />
+            <Info label={t("dash.members.cols.joined")} value={fmtDate(d.member.joined_at)} />
+            <Info label={t("dash.members.lastMessage")} value={timeAgo(d.member.last_message_at)} />
+            <Info label={t("dash.members.lastVoice")} value={timeAgo(d.member.last_voice_at)} />
+            <Info label={t("dash.members.level")} value={d.level ? `${d.level.level} (${fmtNum(d.level.xp)} XP)` : "—"} />
+            <Info label={t("dash.members.messagesIn", { days })} value={fmtNum(totals?.m)} />
+            <Info label={t("dash.members.voiceIn", { days })} value={fmtHours(totals?.v ?? 0)} />
           </dl>
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Meddelanden per dag</h3>
-            <TrendChart data={d.series} dataKey="messages" name="Meddelanden" height={160} />
+            <h3 className="mb-2 text-sm font-semibold">{t("dash.overview.messagesPerDay")}</h3>
+            <TrendChart data={d.series} dataKey="messages" name={t("dash.overview.messages")} height={160} />
           </div>
           {d.cases.length > 0 && (
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Moderering</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t("dash.overview.moderation")}</h3>
               <ul className="space-y-1.5 text-sm">
                 {d.cases.map((c) => (
                   <li key={c.case_number} className="rounded-md border border-line px-3 py-2">
-                    <span className="font-medium">#{c.case_number} {c.action}</span> · <span className="text-muted">{fmtDate(c.created_at)} av {c.moderator_tag}</span>
+                    <span className="font-medium">#{c.case_number} {t(`moderation.actions.${c.action}` as TKey)}</span> · <span className="text-muted">{t("dash.members.caseBy", { date: fmtDate(c.created_at), by: c.moderator_tag })}</span>
                     {c.reason && <div className="text-muted">{c.reason}</div>}
                   </li>
                 ))}
@@ -232,15 +234,15 @@ function MemberDrawer({ userId, days, onClose }: { userId: string | null; days: 
             </div>
           )}
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Senaste händelser</h3>
+            <h3 className="mb-2 text-sm font-semibold">{t("dash.members.recentEvents")}</h3>
             {d.events.length === 0 ? (
-              <p className="text-sm text-muted">Inga händelser registrerade.</p>
+              <p className="text-sm text-muted">{t("dash.members.noEvents")}</p>
             ) : (
               <ul className="space-y-1 text-sm">
                 {d.events.map((e) => (
                   <li key={e.id} className="flex justify-between gap-3 border-b border-line/60 py-1.5">
                     <span>
-                      {eventLabel(e.type, e.data)}
+                      {eventLabel(t, e.type, e.data)}
                       {chanName(e.channel_id) && <span className="text-muted"> · #{chanName(e.channel_id)}</span>}
                     </span>
                     <span className="shrink-0 text-muted">{fmtDateTime(e.created_at)}</span>

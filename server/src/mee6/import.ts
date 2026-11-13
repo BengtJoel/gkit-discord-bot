@@ -4,6 +4,16 @@ import { getModule, saveModule } from "../settings.js";
 import { levelFromXp } from "../bot/modules/levels.js";
 import { log } from "../lib/log.js";
 
+/** Error carrying an i18n key so the dashboard can show it in the user's language */
+class ImportError extends Error {
+  constructor(
+    public code: string,
+    public params?: Record<string, string | number>,
+  ) {
+    super(code);
+  }
+}
+
 /**
  * MEE6 has an undocumented but widely used public endpoint for the leaderboard:
  *   https://mee6.xyz/api/plugins/levels/leaderboard/{guildId}?page=N&limit=1000
@@ -39,7 +49,9 @@ export interface ImportJob {
   pages: number;
   players: number;
   rewards: number;
+  /** i18n key */
   error?: string;
+  errorParams?: Record<string, string | number>;
   startedAt: string;
   finishedAt?: string;
 }
@@ -54,7 +66,7 @@ async function fetchPage(guildId: string, page: number): Promise<Mee6Page> {
     const res = await fetch(`${BASE}/${guildId}?page=${page}&limit=1000`, {
       headers: { "User-Agent": "GuildKitBot-Importer/0.1", Accept: "application/json" },
     }).catch(() => {
-      throw new Error("Kunde inte nå MEE6. Kontrollera att servern har internetåtkomst och försök igen.");
+      throw new ImportError("errors.mee6Unreachable");
     });
     if (res.status === 429) {
       const wait = Number(res.headers.get("retry-after") ?? 2) * 1000;
@@ -62,12 +74,12 @@ async function fetchPage(guildId: string, page: number): Promise<Mee6Page> {
       continue;
     }
     if (res.status === 401 || res.status === 403)
-      throw new Error("MEE6-leaderboarden är inte publik. Slå på “Make my server's leaderboard public” i MEE6 och försök igen.");
-    if (res.status === 404) throw new Error("MEE6 hittade ingen leaderboard för den här servern.");
-    if (!res.ok) throw new Error(`MEE6 svarade ${res.status}`);
+      throw new ImportError("errors.mee6NotPublic");
+    if (res.status === 404) throw new ImportError("errors.mee6NotFound");
+    if (!res.ok) throw new ImportError("errors.mee6Status", { status: res.status });
     return (await res.json()) as Mee6Page;
   }
-  throw new Error("MEE6 rate-limitade för många gånger, försök igen om en stund.");
+  throw new ImportError("errors.mee6RateLimited");
 }
 
 /** Fetch only the first page — used by the dashboard to preview before importing */
@@ -97,7 +109,8 @@ export function startMee6Import(guildId: string, opts: { mode: ImportMode; impor
   jobs.set(guildId, job);
   void run(job).catch((err: Error) => {
     job.status = "error";
-    job.error = err.message;
+    job.error = err instanceof ImportError ? err.code : "errors.serverError";
+    job.errorParams = err instanceof ImportError ? err.params : undefined;
     job.finishedAt = new Date().toISOString();
     log.warn({ err, guildId }, "MEE6 import failed");
   });

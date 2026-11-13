@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Check, ChevronDown, Hash, Loader2, Search, Volume2, X, Folder, MessagesSquare } from "lucide-react";
 import type { Channel, Role } from "../lib/types";
+import { useT, tr } from "../lib/i18n";
 
 /* ---------------- Buttons ---------------- */
 
@@ -252,9 +253,10 @@ function Picker({
   onClear?: () => void;
 }) {
   const { open, setOpen, ref } = usePopover();
+  const { t } = useT();
   const [q, setQ] = useState("");
   const filtered = useMemo(() => items.filter((i) => i.label.toLowerCase().includes(q.toLowerCase())), [items, q]);
-  const sel = selected.map((id) => items.find((i) => i.id === id) ?? { id, label: `Okänd (${id.slice(-4)})` });
+  const sel = selected.map((id) => items.find((i) => i.id === id) ?? { id, label: t("dash.common.unknownItem", { id: id.slice(-4) }) });
   let lastGroup: string | undefined;
 
   return (
@@ -305,10 +307,10 @@ function Picker({
         <div className="absolute z-30 mt-1 w-full min-w-64 overflow-hidden rounded-lg border border-line-2 bg-panel shadow-2xl shadow-black/60">
           <div className="flex items-center gap-2 border-b border-line px-3">
             <Search className="size-4 text-muted" />
-            <input autoFocus className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-faint" placeholder="Sök…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input autoFocus className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-faint" placeholder={t("dash.common.search")} value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <div className="max-h-72 overflow-y-auto p-1">
-            {filtered.length === 0 && <div className="px-3 py-6 text-center text-sm text-muted">Inga träffar</div>}
+            {filtered.length === 0 && <div className="px-3 py-6 text-center text-sm text-muted">{t("dash.common.noMatches")}</div>}
             {filtered.map((i) => {
               const header = i.group !== lastGroup && i.group ? i.group : null;
               lastGroup = i.group;
@@ -357,10 +359,10 @@ function channelItems(channels: Channel[], types: Channel["type"][]): PickerItem
   return list
     .map((c) => ({ c, cat: c.parentId ? cats.get(c.parentId) : undefined }))
     .sort((a, b) => (a.cat?.position ?? -1) - (b.cat?.position ?? -1) || a.c.position - b.c.position)
-    .map(({ c, cat }) => ({ id: c.id, label: c.name, icon: channelIcon(c.type), group: c.type === "category" ? "Kategorier" : (cat?.name ?? "Utan kategori") }));
+    .map(({ c, cat }) => ({ id: c.id, label: c.name, icon: channelIcon(c.type), group: c.type === "category" ? tr("dash.pickers.categories") : (cat?.name ?? tr("dash.pickers.noCategory")) }));
 }
 
-export function ChannelSelect({ value, onChange, types = ["text"], placeholder = "Välj kanal", clearable = true }: { value: string | null; onChange: (v: string | null) => void; types?: Channel["type"][]; placeholder?: string; clearable?: boolean }) {
+export function ChannelSelect({ value, onChange, types = ["text"], placeholder, clearable = true }: { value: string | null; onChange: (v: string | null) => void; types?: Channel["type"][]; placeholder?: string; clearable?: boolean }) {
   const { channels } = useContext(GuildDataContext);
   const items = useMemo(() => channelItems(channels, types), [channels, types]);
   return (
@@ -368,7 +370,7 @@ export function ChannelSelect({ value, onChange, types = ["text"], placeholder =
       items={items}
       selected={value ? [value] : []}
       onToggle={(id) => onChange(id)}
-      placeholder={placeholder}
+      placeholder={placeholder ?? tr("dash.pickers.channel")}
       clearable={clearable}
       onClear={() => onChange(null)}
       renderSelected={(i) => (
@@ -381,7 +383,7 @@ export function ChannelSelect({ value, onChange, types = ["text"], placeholder =
   );
 }
 
-export function ChannelMultiSelect({ value, onChange, types = ["text"], placeholder = "Välj kanaler" }: { value: string[]; onChange: (v: string[]) => void; types?: Channel["type"][]; placeholder?: string }) {
+export function ChannelMultiSelect({ value, onChange, types = ["text"], placeholder }: { value: string[]; onChange: (v: string[]) => void; types?: Channel["type"][]; placeholder?: string }) {
   const { channels } = useContext(GuildDataContext);
   const items = useMemo(() => channelItems(channels, types), [channels, types]);
   return (
@@ -390,7 +392,7 @@ export function ChannelMultiSelect({ value, onChange, types = ["text"], placehol
       items={items}
       selected={value}
       onToggle={(id) => onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id])}
-      placeholder={placeholder}
+      placeholder={placeholder ?? tr("dash.pickers.channels")}
       renderSelected={(i) => (
         <>
           {i.icon ?? <Hash className="size-3.5 text-muted" />}
@@ -403,7 +405,7 @@ export function ChannelMultiSelect({ value, onChange, types = ["text"], placehol
 
 const roleDot = (color?: string) => <span className="size-2.5 shrink-0 rounded-full" style={{ background: color && color !== "#000000" ? color : "#8b8b96" }} />;
 
-export function RoleMultiSelect({ value, onChange, placeholder = "Välj roller", assignableOnly }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string; assignableOnly?: boolean }) {
+export function RoleMultiSelect({ value, onChange, placeholder, assignableOnly }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string; assignableOnly?: boolean }) {
   const { roles } = useContext(GuildDataContext);
   const items = roles
     .filter((r) => !r.managed)
@@ -413,7 +415,7 @@ export function RoleMultiSelect({ value, onChange, placeholder = "Välj roller",
       color: r.color,
       icon: roleDot(r.color),
       disabled: assignableOnly && !r.assignable,
-      note: assignableOnly && !r.assignable ? "över botens roll" : undefined,
+      note: assignableOnly && !r.assignable ? tr("dash.pickers.aboveBot") : undefined,
     }));
   return (
     <Picker
@@ -421,7 +423,7 @@ export function RoleMultiSelect({ value, onChange, placeholder = "Välj roller",
       items={items}
       selected={value}
       onToggle={(id) => onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id])}
-      placeholder={placeholder}
+      placeholder={placeholder ?? tr("dash.pickers.roles")}
       renderSelected={(i) => (
         <>
           {roleDot(i.color)}
@@ -432,17 +434,17 @@ export function RoleMultiSelect({ value, onChange, placeholder = "Välj roller",
   );
 }
 
-export function RoleSelect({ value, onChange, placeholder = "Välj roll", assignableOnly = true }: { value: string | null; onChange: (v: string) => void; placeholder?: string; assignableOnly?: boolean }) {
+export function RoleSelect({ value, onChange, placeholder, assignableOnly = true }: { value: string | null; onChange: (v: string) => void; placeholder?: string; assignableOnly?: boolean }) {
   const { roles } = useContext(GuildDataContext);
   const items = roles
     .filter((r) => !r.managed)
-    .map((r) => ({ id: r.id, label: r.name, color: r.color, icon: roleDot(r.color), disabled: assignableOnly && !r.assignable, note: assignableOnly && !r.assignable ? "över botens roll" : undefined }));
+    .map((r) => ({ id: r.id, label: r.name, color: r.color, icon: roleDot(r.color), disabled: assignableOnly && !r.assignable, note: assignableOnly && !r.assignable ? tr("dash.pickers.aboveBot") : undefined }));
   return (
     <Picker
       items={items}
       selected={value ? [value] : []}
       onToggle={onChange}
-      placeholder={placeholder}
+      placeholder={placeholder ?? tr("dash.pickers.role")}
       renderSelected={(i) => (
         <>
           {roleDot(i.color)}

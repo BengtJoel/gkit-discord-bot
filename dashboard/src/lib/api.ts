@@ -1,8 +1,11 @@
+import { currentLocale, tr } from "./i18n";
+
 export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public issues?: { path: string; message: string }[],
+    public issues?: { path: string; message: string; code?: string }[],
+    public code?: string,
   ) {
     super(message);
   }
@@ -19,10 +22,11 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok && res.status !== 207) {
-    const msg = data?.issues?.length
-      ? `${data.error}: ${data.issues.map((i: { path: string; message: string }) => `${i.path} – ${i.message}`).join(", ")}`
-      : (data?.error ?? `Fel ${res.status}`);
-    throw new ApiError(res.status, msg, data?.issues);
+    // The API sends translation keys; show them in the dashboard's language
+    const base = data?.code ? tr(data.code, data.params) : (data?.error ?? tr("dash.common.errorStatus", { status: res.status }));
+    const issues = (data?.issues ?? []) as { path: string; message: string; code?: string }[];
+    const msg = issues.length ? `${base}: ${issues.map((i) => `${i.path} – ${i.code ? tr(i.code) : i.message}`).join(", ")}` : base;
+    throw new ApiError(res.status, msg, issues, data?.code);
   }
   return data as T;
 }
@@ -36,8 +40,8 @@ export function toDate(v: string | Date | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-const rtf = new Intl.RelativeTimeFormat("sv", { numeric: "auto" });
 export function timeAgo(v: string | Date | null | undefined) {
+  const rtf = new Intl.RelativeTimeFormat(currentLocale(), { numeric: "auto" });
   const d = toDate(v);
   if (!d) return "—";
   const s = (d.getTime() - Date.now()) / 1000;
@@ -51,14 +55,14 @@ export function timeAgo(v: string | Date | null | undefined) {
 }
 
 export const fmtDate = (v: string | Date | null | undefined) =>
-  toDate(v)?.toLocaleDateString("sv-SE", { year: "numeric", month: "short", day: "numeric" }) ?? "—";
+  toDate(v)?.toLocaleDateString(currentLocale(), { year: "numeric", month: "short", day: "numeric" }) ?? "—";
 export const fmtDateTime = (v: string | Date | null | undefined) =>
-  toDate(v)?.toLocaleString("sv-SE", { dateStyle: "medium", timeStyle: "short" }) ?? "—";
-export const fmtNum = (n: number | string | null | undefined) => Number(n ?? 0).toLocaleString("sv-SE");
+  toDate(v)?.toLocaleString(currentLocale(), { dateStyle: "medium", timeStyle: "short" }) ?? "—";
+export const fmtNum = (n: number | string | null | undefined) => Number(n ?? 0).toLocaleString(currentLocale());
 export function fmtHours(seconds: number | string) {
   const s = Number(seconds);
   if (s < 3600) return `${Math.round(s / 60)} min`;
-  return `${(s / 3600).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} h`;
+  return `${(s / 3600).toLocaleString(currentLocale(), { maximumFractionDigits: 1 })} h`;
 }
 
 export const avatarUrl = (userId: string, avatar: string | null | undefined, size = 64) =>

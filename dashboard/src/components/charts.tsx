@@ -1,6 +1,7 @@
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { ReactNode } from "react";
 import { fmtNum } from "../lib/api";
+import { currentLocale, tr } from "../lib/i18n";
 
 /* Validated pair (dark surface #111115): violet #8b5cf6 + teal #0d9488 — CVD ΔE 18.9 */
 export const SERIES = ["#8b5cf6", "#0d9488"] as const;
@@ -11,7 +12,7 @@ const shortDay = (d: string) => {
   const [, m, day] = d.split("-");
   return `${Number(day)}/${Number(m)}`;
 };
-const longDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" });
+const longDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString(currentLocale(), { weekday: "short", day: "numeric", month: "short" });
 
 function TooltipBox({ label, rows }: { label: string; rows: { name: string; value: string; color: string }[] }) {
   return (
@@ -113,13 +114,18 @@ export function Legend({ color, children }: { color: string; children: ReactNode
   );
 }
 
-const DOW = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+/** Monday-first weekday names in the current language (2024-01-01 was a Monday) */
+const weekdays = () => Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2024, 0, 1 + i, 12)).toLocaleDateString(currentLocale(), { weekday: "short", timeZone: "UTC" }));
 
 /** Weekday × hour heatmap, sequential single hue (violet), with per-cell hover title */
 export function Heatmap({ cells, metric }: { cells: { dow: number; hour: number; messages: number; voice_seconds: number }[]; metric: "messages" | "voice_seconds" }) {
   const grid = new Map(cells.map((c) => [`${c.dow}-${c.hour}`, Number(c[metric])]));
   const max = Math.max(1, ...grid.values());
-  const fmt = (v: number) => (metric === "messages" ? `${fmtNum(v)} meddelanden` : `${(v / 3600).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} h röst`);
+  const DOW = weekdays();
+  const fmt = (v: number) =>
+    metric === "messages"
+      ? tr("dash.charts.messagesCount", { count: v, n: fmtNum(v) })
+      : tr("dash.charts.voiceHours", { n: (v / 3600).toLocaleString(currentLocale(), { maximumFractionDigits: 1 }) });
   return (
     <div className="overflow-x-auto">
       <div className="inline-grid min-w-full gap-[2px]" style={{ gridTemplateColumns: "36px repeat(24, minmax(16px, 1fr))" }}>
@@ -148,11 +154,11 @@ export function Heatmap({ cells, metric }: { cells: { dow: number; hour: number;
         ))}
       </div>
       <div className="mt-3 flex items-center justify-end gap-2 text-[11px] text-muted">
-        Mindre
+        {tr("dash.charts.less")}
         {[0.18, 0.4, 0.6, 0.8, 1].map((p) => (
           <span key={p} className="size-3 rounded-[3px]" style={{ background: `color-mix(in oklab, #8b5cf6 ${p * 100}%, #17171c)` }} />
         ))}
-        Mer
+        {tr("dash.charts.more")}
       </div>
     </div>
   );

@@ -2,13 +2,17 @@
   "name": "guildbot",
   "private": true,
   "version": "0.1.0",
-  "workspaces": ["server", "dashboard"],
+  "workspaces": [
+    "server",
+    "dashboard"
+  ],
   "scripts": {
     "dev:server": "npm run dev -w server",
     "dev:dashboard": "npm run dev -w dashboard",
     "build": "npm run build -w dashboard && npm run build -w server",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w dashboard",
     "db:generate": "npm run db:generate -w server",
-    "db:migrate": "npm run db:migrate -w server"
+    "db:migrate": "npm run db:migrate -w server",
+    "test": "npm run test -w server"
   }
 }

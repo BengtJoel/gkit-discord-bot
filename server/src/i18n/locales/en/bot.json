@@ -1,0 +1,335 @@
+{
+  "defaults": {
+    "levelUp": "GG {user}, you reached **level {level}**! 🎉",
+    "welcomeJoin": "Welcome {user} to **{server}**! You are member number {membercount}.",
+    "welcomeDm": "Welcome to {server}!",
+    "welcomeLeave": "**{username}** left the server.",
+    "tempVoiceName": "{displayname}'s channel",
+    "reactionRolesTitle": "Pick your roles"
+  },
+  "common": {
+    "somethingWrong": "Something went wrong 😕",
+    "moduleDisabled": "This module is turned off."
+  },
+  "levels": {
+    "noXp": "{{user}} has no XP yet.",
+    "rank": "Rank",
+    "level": "Level",
+    "xp": "XP",
+    "noMorePlaces": "No more places.",
+    "leaderboardTitle": "Leaderboard — {{server}}",
+    "leaderboardLine": "**{{pos}}.** {{user}} — level {{level}} · {{xp}} XP",
+    "rewardReason": "Level {{level}} reward",
+    "rewardRemovedReason": "Level {{level}} reward (replaced)",
+    "demotedReason": "Level reward removed (now level {{level}})"
+  },
+  "moderation": {
+    "actions": {
+      "warn": "Warning",
+      "timeout": "Timeout",
+      "kick": "Kick",
+      "ban": "Ban",
+      "tempban": "Temporary ban",
+      "unban": "Unban",
+      "automod": "Automod"
+    },
+    "caseTitle": "Case #{{n}} · {{action}}",
+    "user": "User",
+    "moderator": "Moderator",
+    "reason": "Reason",
+    "duration": "Duration",
+    "dm": "You received a **{{action}}**{{extra}} in **{{server}}**.",
+    "dmReason": "Reason: {{reason}}",
+    "memberNotFound": "Couldn't find that member.",
+    "cannotModerate": "You can't moderate that member.",
+    "cannotModerateEither": "Either you or the bot can't moderate that member.",
+    "immune": "That member has an immune role and can't be moderated.",
+    "warned_one": "⚠️ {{user}} was warned (case #{{n}}, {{count}} warning in total).",
+    "warned_other": "⚠️ {{user}} was warned (case #{{n}}, {{count}} warnings in total).",
+    "invalidDuration": "Invalid duration. Use e.g. 10m, 2h or 1d (max 28d).",
+    "invalidBanDuration": "Invalid duration. Use e.g. 1d or 2w.",
+    "timedOut": "🔇 {{user}} was timed out for {{duration}} (case #{{n}}).",
+    "kicked": "👢 {{user}} was kicked (case #{{n}}).",
+    "banned": "🔨 {{user}} was banned (case #{{n}}).",
+    "tempBanned": "🔨 {{user}} was banned for {{duration}} (case #{{n}}).",
+    "notBanned": "That user is not banned.",
+    "unbanned": "✅ {{user}} is no longer banned (case #{{n}}).",
+    "purgeUnsupported": "This doesn't work in this channel.",
+    "purged_one": "🧹 Deleted {{count}} message.",
+    "purged_other": "🧹 Deleted {{count}} messages.",
+    "noCases": "{{user}} has no cases.",
+    "casesTitle": "Cases for {{user}}",
+    "autoEscalation": "Automatic: {{count}} warnings",
+    "tempbanExpired": "Temporary ban expired"
+  },
+  "automod": {
+    "notice": "{{user}}, your message was removed ({{rule}}).",
+    "reason": "Automod: {{rule}}",
+    "rules": {
+      "badWords": "banned word",
+      "invites": "Discord invite",
+      "links": "link",
+      "mentions": "too many mentions",
+      "caps": "excessive caps",
+      "spam": "spam"
+    }
+  },
+  "customCommands": {
+    "disabled": "This command is turned off.",
+    "noPermission": "You don't have permission to use this command.",
+    "userOption": "Optional user, shown as {target}"
+  },
+  "tempVoice": {
+    "mustBeInTemp": "You need to be in a temporary channel.",
+    "ownerStillHere": "The owner is still in the channel.",
+    "claimed": "The channel is yours now.",
+    "onlyOwner": "Only the channel owner can do that.",
+    "done": "Done ✅",
+    "reasonCreated": "Temporary channel for {{user}}",
+    "reasonEmpty": "Temporary channel is empty"
+  },
+  "welcome": {
+    "autoroleReason": "Auto role"
+  },
+  "reactionRoles": {
+    "reason": "Reaction role",
+    "reasonUnique": "Reaction role (one at a time)"
+  },
+  "log": {
+    "titles": {
+      "messageEdited": "Message edited",
+      "messageDeleted": "Message deleted",
+      "messagesBulkDeleted_one": "{{count}} message deleted",
+      "messagesBulkDeleted_other": "{{count}} messages deleted",
+      "memberJoined": "Member joined",
+      "memberLeft": "Member left",
+      "nicknameChanged": "Nickname changed",
+      "rolesChanged": "Roles changed",
+      "timeoutAdded": "Member timed out",
+      "timeoutRemoved": "Timeout removed",
+      "banned": "Member banned",
+      "unbanned": "Member unbanned",
+      "voiceJoined": "Joined voice channel",
+      "voiceLeft": "Left voice channel",
+      "voiceMoved": "Switched voice channel",
+      "channelCreated": "Channel created",
+      "channelDeleted": "Channel deleted",
+      "channelUpdated": "Channel updated",
+      "roleCreated": "Role created",
+      "roleDeleted": "Role deleted",
+      "roleUpdated": "Role updated",
+      "serverUpdated": "Server updated",
+      "emojiCreated": "Emoji added",
+      "emojiDeleted": "Emoji removed"
+    },
+    "fields": {
+      "author": "Author",
+      "channel": "Channel",
+      "before": "Before",
+      "after": "After",
+      "content": "Content",
+      "attachments": "Attachments",
+      "user": "User",
+      "accountCreated": "Account created",
+      "joined": "Joined",
+      "roles": "Roles",
+      "added": "Added",
+      "removed": "Removed",
+      "by": "By",
+      "reason": "Reason",
+      "until": "Until",
+      "name": "Name",
+      "from": "From",
+      "to": "To",
+      "changes": "Changes"
+    },
+    "noContent": "(no text)",
+    "notCached": "(content unknown – the message is older than the bot's cache)",
+    "jump": "Go to message",
+    "memberNumber": "Member #{{n}}",
+    "newAccount": "⚠️ New account ({{age}})",
+    "none": "—"
+  },
+  "commands": {
+    "rank": {
+      "description": "Show level and XP",
+      "options": {
+        "user": {
+          "name": "user",
+          "description": "Whose rank?"
+        }
+      }
+    },
+    "leaderboard": {
+      "description": "Show the server leaderboard",
+      "options": {
+        "page": {
+          "name": "page",
+          "description": "Page"
+        }
+      }
+    },
+    "warn": {
+      "description": "Warn a member",
+      "options": {
+        "user": {
+          "name": "user",
+          "description": "Member"
+        },
+        "reason": {
+          "name": "reason",
+          "description": "Reason"
+        }
+      }
+    },
+    "timeout": {
+      "description": "Time out a member",
+      "options": {
+        "user": {
+          "name": "user",
+          "description": "Member"
+        },
+        "duration": {
+          "name": "duration",
+          "description": "e.g. 10m, 2h, 1d (max 28d)"
+        },
+        "reason": {
+          "name": "reason",
+          "description": "Reason"
+        }
+      }
+    },
+    "kick": {
+      "description": "Kick a member",
+      "options": {
+        "user": {
+          "name": "user",
+          "description": "Member"
+        },
+        "reason": {
+          "name": "reason",
+          "description": "Reason"
+        }
+      }
+    },
+    "ban": {
+      "description": "Ban a user, permanently or for a while",
+      "options": {
+        "user": {
+          "name": "user",
+          "description": "User"
+        },
+        "duration": {
+          "name": "duration",
+          "description": "Temporary ban, e.g. 1d or 2w. Empty = permanent"
+        },
+        "delete_days": {
+          "name": "delete_days",
+          "description": "Delete their messages from the last X days (0-7)"
+        },
+        "reason": {
+          "name": "reason",
+          "description": "Reason"
+        }
+      }
+    },
+    "unban": {
+      "description": "Lift a ban",
+      "options": {
+        "user_id": {
+          "name": "user_id",
+          "description": "User ID"
+        },
+        "reason": {
+          "name": "reason",
+          "description": "Reason"
+        }
+      }
+    },
+    "purge": {
+      "description": "Delete messages in this channel",
+      "options": {
+        "amount": {
+          "name": "amount",
+          "description": "1-100"
+        },
+        "user": {
+          "name": "user",
+          "description": "Only messages from this user"
+        }
+      }
+    },
+    "cases": {
+      "description": "Show a user's moderation history",
+      "options": {
+        "user": {
+          "name": "user",
+          "description": "User"
+        }
+      }
+    },
+    "voice": {
+      "description": "Manage your temporary voice channel",
+      "subcommands": {
+        "name": {
+          "name": "name",
+          "description": "Rename the channel"
+        },
+        "limit": {
+          "name": "limit",
+          "description": "Set max members (0 = no limit)"
+        },
+        "lock": {
+          "name": "lock",
+          "description": "Lock the channel"
+        },
+        "unlock": {
+          "name": "unlock",
+          "description": "Unlock the channel"
+        },
+        "claim": {
+          "name": "claim",
+          "description": "Take over the channel if the owner left"
+        }
+      },
+      "options": {
+        "name": {
+          "name": "name",
+          "description": "New name"
+        },
+        "amount": {
+          "name": "amount",
+          "description": "0-99"
+        }
+      }
+    }
+  },
+  "errors": {
+    "invalidId": "Invalid Discord ID",
+    "notLoggedIn": "Not logged in",
+    "sessionExpired": "Your session has expired",
+    "botNotInGuild": "The bot isn't in that server",
+    "needManageGuild": "You need the Manage Server permission",
+    "notFound": "Not found",
+    "unknownModule": "Unknown module",
+    "invalidValues": "Invalid values",
+    "serverError": "Server error",
+    "discordGuilds": "Couldn't fetch your servers from Discord",
+    "loginFailed": "Discord login failed, please try again.",
+    "mee6NotPublic": "The MEE6 leaderboard isn't public. Turn on “Make my server's leaderboard public” in MEE6 and try again.",
+    "mee6NotFound": "MEE6 has no leaderboard for this server.",
+    "mee6Status": "MEE6 responded with status {{status}}",
+    "mee6RateLimited": "MEE6 rate limited us too many times, try again in a while.",
+    "mee6Unreachable": "Couldn't reach MEE6. Check that the server has internet access and try again.",
+    "builtinCommand": "/{{name}} is a built-in command, pick another name.",
+    "commandExists": "/{{name}} already exists",
+    "commandName": "Only a-z, 0-9, - and _ (max 32 characters)",
+    "invalidSchedule": "Invalid schedule: {{detail}}",
+    "botCannotWrite": "The bot can't post in that channel",
+    "xpOrLevel": "Provide XP or a level",
+    "messageNotFound": "Couldn't find the message",
+    "missingPermission": "The bot is missing the {{permission}} permission",
+    "roleTooHigh": "The role {{role}} is above the bot's highest role",
+    "dmClosed": "The user has closed their DMs"
+  }
+}

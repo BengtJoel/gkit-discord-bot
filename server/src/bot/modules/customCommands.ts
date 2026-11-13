@@ -2,6 +2,9 @@ import { MessageFlags, type ChatInputCommandInteraction, type RESTPostAPIChatInp
 import { and, eq, sql as dsql } from "drizzle-orm";
 import { db, schema } from "../../db/index.js";
 import { renderTemplate } from "../../lib/template.js";
+import { t, userT } from "../../i18n/index.js";
+import { languages, discordLocales } from "../../i18n/core.js";
+import { addRoles, removeRoles } from "../../core/actions.js";
 
 type Row = typeof schema.customCommands.$inferSelect;
 
@@ -15,7 +18,17 @@ export function toCommandJSON(row: Row): RESTPostAPIChatInputApplicationCommands
   return {
     name: row.name,
     description: (row.description || "Custom command").slice(0, 100),
-    options: [{ type: 6, name: "user", description: "Valfri användare ({target})", required: false }],
+    options: [
+      {
+        type: 6,
+        name: "user",
+        description: t("en", "customCommands.userOption"),
+        description_localizations: Object.fromEntries(
+          languages.filter((l) => l !== "en").flatMap((l) => discordLocales[l as "sv"].map((loc) => [loc, t(l, "customCommands.userOption")])),
+        ),
+        required: false,
+      },
+    ],
   };
 }
 
@@ -25,19 +38,21 @@ export async function handleCustomCommand(i: ChatInputCommandInteraction<"cached
   const [row] = await db.select().from(t).where(and(eq(t.guildId, i.guildId), eq(t.name, i.commandName)));
   if (!row) return false;
   const eph = { flags: MessageFlags.Ephemeral } as const;
+  const tu = userT(i);
   if (!row.enabled) {
-    await i.reply({ content: "Det här kommandot är avstängt.", ...eph });
+    await i.reply({ content: tu("customCommands.disabled"), ...eph });
     return true;
   }
   const allowed = row.allowedRoleIds as string[];
   if (allowed.length && !i.member.roles.cache.some((r) => allowed.includes(r.id))) {
-    await i.reply({ content: "Du har inte behörighet att använda det här kommandot.", ...eph });
+    await i.reply({ content: tu("customCommands.noPermission"), ...eph });
     return true;
   }
   const add = row.addRoleIds as string[];
   const remove = row.removeRoleIds as string[];
-  if (add.length) await i.member.roles.add(add, `/${row.name}`).catch(() => {});
-  if (remove.length) await i.member.roles.remove(remove, `/${row.name}`).catch(() => {});
+  const ctx = { source: `command:${row.name}`, reason: `/${row.name}` };
+  if (add.length) await addRoles(i.member, add, ctx);
+  if (remove.length) await removeRoles(i.member, remove, ctx);
 
   const target = i.options.getUser("user");
   const content = renderTemplate(row.response, {

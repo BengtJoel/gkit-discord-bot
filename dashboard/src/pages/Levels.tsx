@@ -22,6 +22,7 @@ import {
   Toggle,
   useToast,
 } from "../components/ui";
+import { useT } from "../lib/i18n";
 
 interface LbRow {
   userId: string;
@@ -36,48 +37,49 @@ interface LbRow {
 }
 
 export function Levels() {
+  const { t } = useT();
   const f = useModuleForm("levels");
   const d = f.draft;
   return (
     <ModuleShell
-      title="Levels"
+      title={t("dash.nav.levels")}
       icon={<TrendingUp className="size-5" />}
-      description="Medlemmar får XP när de skriver och går upp i level. Samma kurva som MEE6, så importerad XP ger exakt samma levels."
+      description={t("dash.levels.description")}
       form={f}
       actions={
         <Link to="../import">
-          <Button icon={<Download className="size-4" />}>Importera från MEE6</Button>
+          <Button icon={<Download className="size-4" />}>{t("dash.nav.import")}</Button>
         </Link>
       }
     >
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="XP per meddelande" description="Slumpas mellan min och max, max en gång per cooldown.">
+        <Card title={t("dash.levels.xpPerMessage")} description={t("dash.levels.xpPerMessageHint")}>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Min XP">
+            <Field label={t("dash.levels.minXp")}>
               <NumberInput value={d.xpMin} onChange={(v) => f.update("xpMin", v)} min={0} max={1000} />
             </Field>
-            <Field label="Max XP">
+            <Field label={t("dash.levels.maxXp")}>
               <NumberInput value={d.xpMax} onChange={(v) => f.update("xpMax", v)} min={0} max={1000} />
             </Field>
-            <Field label="Cooldown">
-              <NumberInput value={d.cooldownSeconds} onChange={(v) => f.update("cooldownSeconds", v)} min={0} max={3600} suffix="sek" />
+            <Field label={t("dash.levels.cooldown")}>
+              <NumberInput value={d.cooldownSeconds} onChange={(v) => f.update("cooldownSeconds", v)} min={0} max={3600} suffix={t("dash.units.sec")} />
             </Field>
-            <Field label="Multiplikator" hint="1 = normalt, 2 = dubbel XP">
+            <Field label={t("dash.levels.multiplier")} hint={t("dash.levels.multiplierHint")}>
               <NumberInput value={d.multiplier} onChange={(v) => f.update("multiplier", v)} min={0} max={10} step={0.1} suffix="×" />
             </Field>
           </div>
         </Card>
 
-        <Card title="Level up-meddelande">
+        <Card title={t("dash.levels.levelUpMessage")}>
           <div className="space-y-4">
             <Segmented
               value={d.announce.mode}
               onChange={(mode) => f.update("announce", { ...d.announce, mode })}
               options={[
-                { value: "current", label: "Samma kanal" },
-                { value: "channel", label: "Egen kanal" },
-                { value: "dm", label: "DM" },
-                { value: "off", label: "Av" },
+                { value: "current", label: t("dash.levels.announce.current") },
+                { value: "channel", label: t("dash.levels.announce.channel") },
+                { value: "dm", label: t("dash.levels.announce.dm") },
+                { value: "off", label: t("dash.levels.announce.off") },
               ]}
             />
             {d.announce.mode === "channel" && (
@@ -87,11 +89,12 @@ export function Levels() {
               <TemplateInput
                 value={d.announce.message}
                 onChange={(message) => f.update("announce", { ...d.announce, message })}
+                placeholder={t("defaults.levelUp")}
                 variables={[
-                  { key: "user", label: "Nämner användaren" },
-                  { key: "username", label: "Användarnamn" },
-                  { key: "level", label: "Ny level" },
-                  { key: "server", label: "Servernamn" },
+                  { key: "user", label: t("dash.vars.user") },
+                  { key: "username", label: t("dash.vars.username") },
+                  { key: "level", label: t("dash.vars.level") },
+                  { key: "server", label: t("dash.vars.server") },
                 ]}
               />
             )}
@@ -100,21 +103,21 @@ export function Levels() {
       </div>
 
       <Card
-        title="Rollbelöningar"
-        description="Roller som delas ut automatiskt vid en viss level."
+        title={t("dash.levels.rewards")}
+        description={t("dash.levels.rewardsHint")}
         actions={
           <Button size="sm" icon={<Plus className="size-4" />} onClick={() => f.update("roleRewards", [...d.roleRewards, { level: (d.roleRewards.at(-1)?.level ?? 0) + 5, roleId: "" }])}>
-            Lägg till
+            {t("dash.common.add")}
           </Button>
         }
       >
         {d.roleRewards.length === 0 ? (
-          <p className="text-sm text-muted">Inga belöningar ännu.</p>
+          <p className="text-sm text-muted">{t("dash.levels.noRewards")}</p>
         ) : (
           <div className="space-y-2">
             {d.roleRewards.map((r, i) => (
               <div key={i} className="flex items-center gap-3">
-                <span className="text-sm text-muted">Level</span>
+                <span className="text-sm text-muted">{t("dash.members.level")}</span>
                 <div className="w-24">
                   <NumberInput value={r.level} min={1} onChange={(level) => f.update("roleRewards", d.roleRewards.map((x, j) => (j === i ? { ...x, level } : x)))} />
                 </div>
@@ -131,19 +134,26 @@ export function Levels() {
         )}
         <div className="mt-5 flex items-center justify-between rounded-lg border border-line px-4 py-3">
           <div>
-            <div className="text-sm font-medium">Behåll tidigare belöningar</div>
-            <div className="text-[13px] text-muted">Av = medlemmen har bara den högsta belöningsrollen.</div>
+            <div className="text-sm font-medium">{t("dash.levels.stack")}</div>
+            <div className="text-[13px] text-muted">{t("dash.levels.stackHint")}</div>
           </div>
           <Toggle checked={d.stackRewards} onChange={(v) => f.update("stackRewards", v)} />
         </div>
+        <div className="mt-2 flex items-center justify-between rounded-lg border border-line px-4 py-3">
+          <div>
+            <div className="text-sm font-medium">{t("dash.levels.removeOnDemote")}</div>
+            <div className="text-[13px] text-muted">{t("dash.levels.removeOnDemoteHint")}</div>
+          </div>
+          <Toggle checked={d.removeOnDemote} onChange={(v) => f.update("removeOnDemote", v)} />
+        </div>
       </Card>
 
-      <Card title="Undantag" description="Ingen XP i dessa kanaler eller för dessa roller.">
+      <Card title={t("dash.levels.exceptions")} description={t("dash.levels.exceptionsHint")}>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Field label="Kanaler utan XP">
+          <Field label={t("dash.levels.noXpChannels")}>
             <ChannelMultiSelect value={d.noXpChannelIds} onChange={(v) => f.update("noXpChannelIds", v)} />
           </Field>
-          <Field label="Roller utan XP">
+          <Field label={t("dash.levels.noXpRoles")}>
             <RoleMultiSelect value={d.noXpRoleIds} onChange={(v) => f.update("noXpRoleIds", v)} />
           </Field>
         </div>
@@ -156,6 +166,7 @@ export function Levels() {
 
 function Leaderboard() {
   const g = useGuild();
+  const { t } = useT();
   const qc = useQueryClient();
   const toast = useToast();
   const [search, setSearch] = useState("");
@@ -171,7 +182,7 @@ function Leaderboard() {
   const save = useMutation({
     mutationFn: () => api(`/guilds/${g.id}/levels/${edit!.userId}`, { method: "PATCH", json: { level: editLevel } }),
     onSuccess: () => {
-      toast("Level uppdaterad");
+      toast(t("dash.levels.levelUpdated"));
       setEdit(null);
       void qc.invalidateQueries({ queryKey: ["levels", g.id] });
     },
@@ -180,7 +191,7 @@ function Leaderboard() {
   const reset = useMutation({
     mutationFn: () => api(`/guilds/${g.id}/levels`, { method: "DELETE" }),
     onSuccess: () => {
-      toast("All XP är nollställd");
+      toast(t("dash.levels.resetDone"));
       setConfirmReset(false);
       void qc.invalidateQueries({ queryKey: ["levels", g.id] });
     },
@@ -188,23 +199,23 @@ function Leaderboard() {
 
   return (
     <Card
-      title="Topplista"
-      description={q.data ? `${fmtNum(q.data.total)} medlemmar med XP` : undefined}
+      title={t("dash.levels.leaderboard")}
+      description={q.data ? t("dash.levels.membersWithXp", { n: fmtNum(q.data.total) }) : undefined}
       padded={false}
       actions={
         <div className="flex gap-2">
           <div className="relative w-52">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-            <input className="input h-8 pl-9" placeholder="Sök…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+            <input className="input h-8 pl-9" placeholder={t("dash.common.search")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
           </div>
-          <Button size="sm" variant="danger" onClick={() => setConfirmReset(true)}>Nollställ</Button>
+          <Button size="sm" variant="danger" onClick={() => setConfirmReset(true)}>{t("dash.levels.reset")}</Button>
         </div>
       }
     >
       {q.isLoading ? (
         <div className="grid h-32 place-items-center"><Spinner /></div>
       ) : !q.data?.rows.length ? (
-        <Empty icon={<TrendingUp className="size-5" />} title="Ingen har XP än">Importera från MEE6 eller vänta tills folk börjar skriva.</Empty>
+        <Empty icon={<TrendingUp className="size-5" />} title={t("dash.levels.emptyTitle")}>{t("dash.levels.emptyBody")}</Empty>
       ) : (
         <ul className="divide-y divide-line">
           {q.data.rows.map((r) => (
@@ -218,7 +229,7 @@ function Leaderboard() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-semibold">Level {r.level}</div>
+                <div className="text-sm font-semibold">{t("dash.members.level")} {r.level}</div>
                 <div className="text-xs text-muted tabular-nums">{fmtNum(r.xp)} XP</div>
               </div>
               <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100" onClick={() => { setEdit(r); setEditLevel(r.level); }}>
@@ -230,38 +241,38 @@ function Leaderboard() {
       )}
       {q.data && q.data.total > 50 && !search && (
         <div className="flex justify-end gap-2 border-t border-line px-5 py-3">
-          <Button size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Föregående</Button>
-          <Button size="sm" disabled={(page + 1) * 50 >= q.data.total} onClick={() => setPage(page + 1)}>Nästa</Button>
+          <Button size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>{t("dash.common.previous")}</Button>
+          <Button size="sm" disabled={(page + 1) * 50 >= q.data.total} onClick={() => setPage(page + 1)}>{t("dash.common.next")}</Button>
         </div>
       )}
 
       <Modal
         open={!!edit}
         onClose={() => setEdit(null)}
-        title={`Ändra level för ${edit?.username}`}
+        title={t("dash.levels.editTitle", { name: edit?.username ?? "" })}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setEdit(null)}>Avbryt</Button>
-            <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>Spara</Button>
+            <Button variant="ghost" onClick={() => setEdit(null)}>{t("dash.common.cancel")}</Button>
+            <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>{t("dash.common.save")}</Button>
           </>
         }
       >
-        <Field label="Ny level" hint="XP sätts till början av den leveln. Rollbelöningar synkas direkt.">
+        <Field label={t("dash.levels.newLevel")} hint={t("dash.levels.newLevelHint")}>
           <NumberInput value={editLevel} onChange={setEditLevel} min={0} max={1000} />
         </Field>
       </Modal>
       <Modal
         open={confirmReset}
         onClose={() => setConfirmReset(false)}
-        title="Nollställ all XP?"
+        title={t("dash.levels.resetTitle")}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setConfirmReset(false)}>Avbryt</Button>
-            <Button variant="danger" loading={reset.isPending} onClick={() => reset.mutate()}>Ja, nollställ allt</Button>
+            <Button variant="ghost" onClick={() => setConfirmReset(false)}>{t("dash.common.cancel")}</Button>
+            <Button variant="danger" loading={reset.isPending} onClick={() => reset.mutate()}>{t("dash.levels.resetConfirm")}</Button>
           </>
         }
       >
-        <p className="text-sm text-muted">All XP och alla levels på servern raderas. Det går inte att ångra (men du kan importera från MEE6 igen).</p>
+        <p className="text-sm text-muted">{t("dash.levels.resetBody")}</p>
       </Modal>
     </Card>
   );

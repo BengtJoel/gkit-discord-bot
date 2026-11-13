@@ -249,3 +249,47 @@ export const auditLog = pgTable(
   },
   (t) => [index("audit_guild").on(t.guildId, t.createdAt)],
 );
+
+/* ---------- Core: persistent jobs and action log ---------- */
+
+/**
+ * Persistent job queue (delayed and retried work): temporary bans, temporary roles,
+ * "wait X days" steps in automations. Survives restarts, claimed with FOR UPDATE SKIP LOCKED.
+ */
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    type: text("type").notNull(),
+    guildId: text("guild_id"),
+    runAt: timestamp("run_at", { withTimezone: true }).notNull(),
+    payload: jsonb("payload").notNull().default({}),
+    /** pending | running | done | failed */
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    /** Optional unique key so the same job is only scheduled once (e.g. unban:<guild>:<user>) */
+    dedupeKey: text("dedupe_key"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("jobs_due").on(t.status, t.runAt), uniqueIndex("jobs_dedupe").on(t.dedupeKey), index("jobs_guild").on(t.guildId)],
+);
+
+/** Every action the bot takes on a member or channel, with the module/rule that caused it. */
+export const actionLog = pgTable(
+  "action_log",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    guildId: text("guild_id").notNull(),
+    /** e.g. levels, welcome, reactionRoles, moderation, automation:12 */
+    source: text("source").notNull(),
+    action: text("action").notNull(),
+    targetId: text("target_id"),
+    ok: boolean("ok").notNull(),
+    error: text("error"),
+    data: jsonb("data").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("action_log_guild_time").on(t.guildId, t.createdAt), index("action_log_source").on(t.guildId, t.source)],
+);

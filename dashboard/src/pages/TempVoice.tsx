@@ -2,34 +2,45 @@ import { Mic } from "lucide-react";
 import { useModuleForm } from "../lib/guild";
 import { ModuleShell } from "../components/ModuleShell";
 import { Card, ChannelMultiSelect, ChannelSelect, Field, NumberInput, TemplateInput } from "../components/ui";
+import { useT } from "../lib/i18n";
 
 export function TempVoice() {
+  const { t } = useT();
   const f = useModuleForm("tempVoice");
   const d = f.draft;
   return (
     <ModuleShell
-      title="Skapa en kanal"
+      title={t("dash.nav.tempVoice")}
       icon={<Mic className="size-5" />}
       description={
         <>
-          När någon går in i en "skapa"-kanal får de en egen röstkanal som försvinner när den blir tom. Ägaren styr den med{" "}
-          <span className="kbd">/voice namn</span> <span className="kbd">/voice gräns</span> <span className="kbd">/voice lås</span> <span className="kbd">/voice ta_över</span>.
+          {t("dash.tempVoice.description")} <span className="kbd">/voice name</span> <span className="kbd">/voice limit</span>{" "}
+          <span className="kbd">/voice lock</span> <span className="kbd">/voice claim</span>
         </>
       }
       form={f}
     >
-      <Card title="Inställningar">
+      <Card title={t("dash.nav.settings")}>
         <div className="grid gap-5 lg:grid-cols-2">
-          <Field label="Skapa-kanaler" hint='Röstkanaler som fungerar som knapp, t.ex. "➕ Skapa kanal". Du kan ha flera, t.ex. en per kategori.'>
-            <ChannelMultiSelect value={d.hubChannelIds} onChange={(v) => f.update("hubChannelIds", v)} types={["voice"]} placeholder="Välj röstkanaler" />
+          <Field label={t("dash.tempVoice.hubs")} hint={t("dash.tempVoice.hubsHint")}>
+            <ChannelMultiSelect value={d.hubChannelIds} onChange={(v) => f.update("hubChannelIds", v)} types={["voice"]} placeholder={t("dash.pickers.voiceChannels")} />
           </Field>
-          <Field label="Kategori för nya kanaler" hint="Tomt = samma kategori som skapa-kanalen.">
-            <ChannelSelect value={d.categoryId} onChange={(v) => f.update("categoryId", v)} types={["category"]} placeholder="Samma som skapa-kanalen" />
+          <Field label={t("dash.tempVoice.category")} hint={t("dash.tempVoice.categoryHint")}>
+            <ChannelSelect value={d.categoryId} onChange={(v) => f.update("categoryId", v)} types={["category"]} placeholder={t("dash.tempVoice.sameAsHub")} />
           </Field>
-          <Field label="Namn på nya kanaler">
-            <TemplateInput rows={1} value={d.nameTemplate} onChange={(v) => f.update("nameTemplate", v)} variables={[{ key: "displayname", label: "Visningsnamn" }, { key: "username", label: "Användarnamn" }, { key: "user", label: "Visningsnamn" }]} />
+          <Field label={t("dash.tempVoice.name")}>
+            <TemplateInput
+              rows={1}
+              value={d.nameTemplate}
+              placeholder={t("defaults.tempVoiceName")}
+              onChange={(v) => f.update("nameTemplate", v)}
+              variables={[
+                { key: "displayname", label: t("dash.vars.displayname") },
+                { key: "username", label: t("dash.vars.username") },
+              ]}
+            />
           </Field>
-          <Field label="Max antal personer" hint="0 = obegränsat">
+          <Field label={t("dash.tempVoice.limit")} hint={t("dash.tempVoice.limitHint")}>
             <NumberInput value={d.userLimit} min={0} max={99} onChange={(v) => f.update("userLimit", v)} />
           </Field>
         </div>

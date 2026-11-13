@@ -3,9 +3,15 @@
 En egen MEE6-ersättare som körs på din egen server. Bot, API och dashboard ligger i samma Node-process, och data sparas i Postgres.
 Schemat är byggt per `guild_id` så att det kan flyttas in i GuildKit/Supabase senare.
 
-**Moduler:** Levels (samma XP-kurva som MEE6) · Reaction roles · Välkomst/autoroller · Moderering med ärenden och eskalering ·
-Automod · Egna slash-kommandon · Schemalagda meddelanden · "Skapa en kanal" (tillfälliga röstkanaler) ·
-Aktivitetsrapporter (meddelanden, röst, medlemsflöde, heatmap, inaktiva medlemmar, CSV-export) · Import från MEE6.
+**Moduler:** Levels (samma XP-kurva som MEE6) · Reaction roles · Välkomst/autoroller · Moderering med ärenden, eskalering,
+tillfälliga bans och immunitetsroller · Automod · Serverlogg · Egna slash-kommandon · Schemalagda meddelanden ·
+"Skapa en kanal" (tillfälliga röstkanaler) · Aktivitetsrapporter (meddelanden, röst, medlemsflöde, heatmap, inaktiva
+medlemmar, CSV-export) · Import från MEE6.
+
+**Språk:** engelska och svenska. Botens språk i Discord väljs per server under Inställningar (standard: serverns
+Discord-språk). Privata svar följer varje medlems eget Discord-språk. Dashboarden har en egen språkväljare.
+Slash-kommandona heter samma sak för alla (`/rank`, `/warn`, `/voice limit`), men beskrivningar och argument visas
+på svenska för svenska användare.
 
 ## 1. Skapa boten i Discord
 
@@ -54,11 +60,28 @@ npm run dev:dashboard  # Vite på :5173 med proxy till API:t
 npm run db:generate    # efter ändringar i server/src/db/schema.ts → ny migration (körs automatiskt vid start)
 ```
 
+## Uppgradera
+
+```bash
+git pull && docker compose up -d --build
+```
+
+Databasmigreringar körs automatiskt vid start. Har du bjudit in boten innan serverloggen fanns: bjud in den igen från
+dashboarden (eller ge botens roll *Visa granskningslogg*), annars kan loggen inte visa vem som gjorde en ändring.
+
+## Tester
+
+```bash
+npm test   # i18n-paritet, slash-kommandon, automod, levels, mallar, jobbkö (kräver Postgres, annars hoppas den över)
+```
+
 ## Struktur
 
 ```
 server/src
-  bot/modules/   levels, reactionRoles, welcome, moderation, automod, customCommands, timers, tempVoice, activity
+  core/          händelsebuss, åtgärdslager (behörighetskontroll + action_log), jobbkö i Postgres
+  i18n/          språkfiler (locales/en, locales/sv) som både bot och dashboard använder
+  bot/modules/   levels, reactionRoles, welcome, moderation, automod, serverLog, customCommands, timers, tempVoice, activity
   api/           Fastify: Discord-OAuth, behörighet (Hantera server), routes för moduler och rapporter
   mee6/          import via MEE6:s publika leaderboard-endpoint
   settings.ts    zod-scheman + standardvärden för varje moduls inställningar
@@ -67,4 +90,7 @@ dashboard/src    React + Vite + Tailwind, en sida per modul
 ```
 
 Slash-kommandon registreras per server och bara för påslagna moduler, så de uppdateras direkt när du slår på eller av något.
+
+Nya texter läggs i `server/src/i18n/locales/en/*.json` och `sv/*.json`. En nyckel som saknas på engelska ger typfel,
+och testerna larmar om svenska och engelska inte har samma nycklar.
 Innehållet i meddelanden sparas aldrig. Rapporterna bygger bara på antal per medlem och dag.

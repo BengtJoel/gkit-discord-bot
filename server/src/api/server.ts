@@ -11,6 +11,7 @@ import { registerAuth } from "./auth.js";
 import { registerGuildRoutes } from "./routes/guild.js";
 import { registerFeatureRoutes } from "./routes/features.js";
 import { registerReportRoutes } from "./routes/reports.js";
+import { apiError, ApiError } from "./errors.js";
 
 export async function buildApi() {
   const app = Fastify({ logger: { level: env.LOG_LEVEL }, trustProxy: true });
@@ -18,14 +19,15 @@ export async function buildApi() {
 
   app.setErrorHandler((err, _req, reply) => {
     if (err instanceof ZodError) {
-      return reply.code(400).send({
-        error: "Ogiltiga värden",
-        issues: err.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
+      // Custom messages in zod schemas are translation keys (e.g. errors.invalidId)
+      return apiError(reply, 400, "errors.invalidValues", undefined, {
+        issues: err.issues.map((i) => ({ path: i.path.join("."), message: i.message, code: i.message.startsWith("errors.") ? i.message : undefined })),
       });
     }
+    if (err instanceof ApiError) return apiError(reply, err.statusCode, err.code, err.params);
     const status = (err as { statusCode?: number }).statusCode ?? 500;
     if (status >= 500) app.log.error(err);
-    return reply.code(status).send({ error: status >= 500 ? "Serverfel" : (err as Error).message });
+    return status >= 500 ? apiError(reply, status, "errors.serverError") : reply.code(status).send({ error: (err as Error).message });
   });
 
   app.get("/api/health", async () => ({
@@ -46,7 +48,7 @@ export async function buildApi() {
   if (fs.existsSync(dist)) {
     await app.register(fastifyStatic, { root: dist, wildcard: false });
     app.setNotFoundHandler((req, reply) => {
-      if (req.url.startsWith("/api/")) return reply.code(404).send({ error: "Hittades inte" });
+      if (req.url.startsWith("/api/")) return apiError(reply, 404, "errors.notFound");
       return reply.sendFile("index.html");
     });
   }

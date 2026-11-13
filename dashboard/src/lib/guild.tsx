@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type { GuildData, ModuleName, ModuleState, ModuleConfigs } from "./types";
 import { GuildDataContext, useToast } from "../components/ui";
+import { tr } from "./i18n";
 
 const Ctx = createContext<GuildData | null>(null);
 
@@ -57,9 +58,9 @@ export function useModuleForm<M extends ModuleName>(module: M) {
     update,
     dirty,
     saving: mutation.isPending,
-    save: () => mutation.mutateAsync({ config: draft }).then(() => toast("Ändringarna är sparade")),
+    save: () => mutation.mutateAsync({ config: draft }).then(() => toast(tr("dash.common.saved"))),
     reset: () => setDraft(JSON.parse(savedJson)),
     setEnabled: (enabled: boolean) =>
-      mutation.mutateAsync({ enabled }).then(() => toast(enabled ? "Modulen är på" : "Modulen är avstängd")),
+      mutation.mutateAsync({ enabled }).then(() => toast(enabled ? tr("dash.module.turnedOn") : tr("dash.module.turnedOff"))),
   };
 }

@@ -25,9 +25,18 @@ export interface Emoji {
   tag: string;
 }
 
+export const serverLogCategories = ["messages", "members", "roles", "voice", "channels", "server", "moderation"] as const;
+export type ServerLogCategory = (typeof serverLogCategories)[number];
+
 export type AutomodAction = "delete" | "delete_warn" | "delete_timeout";
 
 export interface ModuleConfigs {
+  general: { language: "auto" | "en" | "sv" };
+  serverLog: {
+    channels: Record<ServerLogCategory, string | null>;
+    ignoredChannelIds: string[];
+    ignoreBots: boolean;
+  };
   levels: {
     xpMin: number;
     xpMax: number;
@@ -38,6 +47,7 @@ export interface ModuleConfigs {
     noXpRoleIds: string[];
     roleRewards: { level: number; roleId: string }[];
     stackRewards: boolean;
+    removeOnDemote: boolean;
   };
   welcome: {
     join: { enabled: boolean; channelId: string | null; message: string };
@@ -47,6 +57,7 @@ export interface ModuleConfigs {
   };
   moderation: {
     logChannelId: string | null;
+    immuneRoleIds: string[];
     dmOnAction: boolean;
     warnThresholds: { count: number; action: "timeout" | "kick" | "ban"; durationMinutes: number }[];
   };
@@ -72,7 +83,7 @@ export type ModuleState<M extends ModuleName = ModuleName> = { enabled: boolean;
 
 export interface GuildData {
   id: string;
-  name: string;
+  name: string | null;
   icon: string | null;
   memberCount: number;
   channels: Channel[];

@@ -4,6 +4,7 @@ import { ScrollText } from "lucide-react";
 import { api, avatarUrl, fmtDateTime } from "../lib/api";
 import { useGuild } from "../lib/guild";
 import { Button, Card, Empty, PageHeader, Select, Spinner } from "../components/ui";
+import { useT, type TKey } from "../lib/i18n";
 
 interface Ev {
   id: string;
@@ -16,25 +17,28 @@ interface Ev {
   avatar: string | null;
 }
 
-const LABELS: Record<string, string> = {
-  member_join: "Gick med i servern",
-  member_leave: "Lämnade servern",
-  voice_join: "Gick in i röstkanal",
-  voice_leave: "Lämnade röstkanal",
-  level_up: "Gick upp i level",
-  mod_action: "Moderering",
-  automod: "Automod",
-};
+const TYPES = ["member_join", "member_leave", "voice_join", "voice_leave", "level_up", "mod_action", "automod"] as const;
 
-export function eventLabel(type: string, data: Record<string, unknown>) {
-  if (type === "level_up") return `Nådde level ${data.level}`;
-  if (type === "mod_action") return `${String(data.action ?? "").toUpperCase()}${data.reason ? `: ${data.reason}` : ""}`;
-  if (type === "automod") return `Automod: ${data.rule}`;
-  return LABELS[type] ?? type;
+type T = (key: TKey, params?: Record<string, string | number>) => string;
+
+export function eventLabel(t: T, type: string, data: Record<string, unknown>) {
+  if (type === "level_up") return t("dash.events.reachedLevel", { level: Number(data.level) });
+  if (type === "mod_action") {
+    const action = t(`moderation.actions.${String(data.action)}` as TKey);
+    return data.reason ? `${action}: ${data.reason}` : action;
+  }
+  if (type === "automod") {
+    // newer events store the rule key, older ones a ready-made label
+    const rule = String(data.rule ?? "");
+    const label = t(`automod.rules.${rule}` as TKey);
+    return `Automod: ${label.startsWith("automod.") ? rule : label}`;
+  }
+  return (TYPES as readonly string[]).includes(type) ? t(`dash.events.types.${type}` as TKey) : type;
 }
 
 export function EventLog() {
   const g = useGuild();
+  const { t } = useT();
   const [type, setType] = useState("");
   const q = useInfiniteQuery({
     queryKey: ["events", g.id, type],
@@ -48,15 +52,15 @@ export function EventLog() {
   return (
     <div>
       <PageHeader
-        title="Händelselogg"
+        title={t("dash.events.title")}
         icon={<ScrollText className="size-5" />}
-        description="Allt som har hänt: in/ut ur servern, röstkanaler, levels och moderering. Själva meddelandena sparas inte, bara räknas."
+        description={t("dash.events.description")}
         actions={
           <div className="w-56">
             <Select
               value={type}
               onChange={setType}
-              options={[{ value: "", label: "Alla händelser" }, ...Object.entries(LABELS).map(([value, label]) => ({ value, label }))]}
+              options={[{ value: "", label: t("dash.events.all") }, ...TYPES.map((value) => ({ value, label: t(`dash.events.types.${value}` as TKey) }))]}
             />
           </div>
         }
@@ -65,14 +69,14 @@ export function EventLog() {
         {q.isLoading ? (
           <div className="grid h-40 place-items-center"><Spinner /></div>
         ) : rows.length === 0 ? (
-          <Empty icon={<ScrollText className="size-5" />} title="Inga händelser ännu" />
+          <Empty icon={<ScrollText className="size-5" />} title={t("dash.events.empty")} />
         ) : (
           <ul className="divide-y divide-line">
             {rows.map((e) => (
               <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
                 {e.user_id ? <img src={avatarUrl(e.user_id, e.avatar)} className="size-7 rounded-full" alt="" /> : <div className="size-7" />}
                 <div className="min-w-0 flex-1">
-                  <span className="font-medium">{e.display_name ?? e.user_id ?? "—"}</span> <span className="text-muted">{eventLabel(e.type, e.data)}</span>
+                  <span className="font-medium">{e.display_name ?? e.user_id ?? "—"}</span> <span className="text-muted">{eventLabel(t, e.type, e.data)}</span>
                   {chan(e.channel_id) && <span className="text-muted"> · #{chan(e.channel_id)}</span>}
                 </div>
                 <span className="shrink-0 text-xs text-muted">{fmtDateTime(e.created_at)}</span>
@@ -82,7 +86,7 @@ export function EventLog() {
         )}
         {q.hasNextPage && (
           <div className="border-t border-line p-3 text-center">
-            <Button size="sm" loading={q.isFetchingNextPage} onClick={() => void q.fetchNextPage()}>Ladda fler</Button>
+            <Button size="sm" loading={q.isFetchingNextPage} onClick={() => void q.fetchNextPage()}>{t("dash.common.loadMore")}</Button>
           </div>
         )}
       </Card>

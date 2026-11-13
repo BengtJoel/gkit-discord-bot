@@ -8,7 +8,9 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "resolveJsonModule": true,
+    "paths": { "@i18n/*": ["../server/src/i18n/*"] }
   },
   "include": ["src"]
 }

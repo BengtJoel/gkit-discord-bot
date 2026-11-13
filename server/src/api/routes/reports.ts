@@ -5,6 +5,7 @@ import { requireGuildAccess } from "../auth.js";
 import { discordGuild, type GP } from "./guild.js";
 import { getModule } from "../../settings.js";
 import { levelFromXp } from "../../bot/modules/levels.js";
+import { t, isLang } from "../../i18n/index.js";
 
 type Q = { Querystring: { days?: string; from?: string; to?: string } };
 
@@ -180,22 +181,16 @@ export function registerReportRoutes(app: FastifyInstance) {
     r.get<GP & { Querystring: Record<string, string | undefined> }>("/api/guilds/:guildId/reports/members.csv", async (req, reply) => {
       const rows = await memberReport(req.params.guildId, { ...req.query, limit: "5000", page: "0" });
       const { from, to } = period(req.query);
-      const csv = toCsv(rows, [
-        ["user_id", "Användar-ID"],
-        ["display_name", "Namn"],
-        ["username", "Användarnamn"],
-        ["messages", "Meddelanden"],
-        ["voice_seconds", "Röst (sekunder)"],
-        ["reactions", "Reaktioner"],
-        ["commands", "Kommandon"],
-        ["active_days", "Aktiva dagar"],
-        ["xp", "XP"],
-        ["last_seen", "Senast aktiv"],
-        ["joined_at", "Gick med"],
-        ["left_at", "Lämnade"],
-      ]);
+      const lang = isLang(req.query.lang) ? req.query.lang : "en";
+      const col = (k: string) => t(lang, `dash.members.csv.${k}`);
+      const csv = toCsv(
+        rows,
+        (["user_id", "display_name", "username", "messages", "voice_seconds", "reactions", "commands", "active_days", "xp", "last_seen", "joined_at", "left_at"] as const).map(
+          (k) => [k, col(k)] as [string, string],
+        ),
+      );
       reply.header("Content-Type", "text/csv; charset=utf-8");
-      reply.header("Content-Disposition", `attachment; filename="aktivitet_${from}_${to}.csv"`);
+      reply.header("Content-Disposition", `attachment; filename="activity_${from}_${to}.csv"`);
       return "﻿" + csv; // BOM so Excel opens åäö correctly
     });
 
