@@ -1,0 +1,55 @@
+import Fastify from "fastify";
+import cookie from "@fastify/cookie";
+import fastifyStatic from "@fastify/static";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import { ZodError } from "zod";
+import { env, botEnabled } from "../env.js";
+import { client } from "../bot/client.js";
+import { registerAuth } from "./auth.js";
+import { registerGuildRoutes } from "./routes/guild.js";
+import { registerFeatureRoutes } from "./routes/features.js";
+import { registerReportRoutes } from "./routes/reports.js";
+
+export async function buildApi() {
+  const app = Fastify({ logger: { level: env.LOG_LEVEL }, trustProxy: true });
+  await app.register(cookie, { secret: env.SESSION_SECRET });
+
+  app.setErrorHandler((err, _req, reply) => {
+    if (err instanceof ZodError) {
+      return reply.code(400).send({
+        error: "Ogiltiga värden",
+        issues: err.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
+      });
+    }
+    const status = (err as { statusCode?: number }).statusCode ?? 500;
+    if (status >= 500) app.log.error(err);
+    return reply.code(status).send({ error: status >= 500 ? "Serverfel" : (err as Error).message });
+  });
+
+  app.get("/api/health", async () => ({
+    ok: true,
+    bot: botEnabled ? (client.isReady() ? "ready" : "connecting") : "disabled",
+    guilds: client.isReady() ? client.guilds.cache.size : 0,
+    uptime: process.uptime(),
+  }));
+
+  registerAuth(app);
+  registerGuildRoutes(app);
+  registerFeatureRoutes(app);
+  registerReportRoutes(app);
+
+  // Serve the built dashboard (single page app) if present
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const dist = path.resolve(here, "../../../dashboard/dist");
+  if (fs.existsSync(dist)) {
+    await app.register(fastifyStatic, { root: dist, wildcard: false });
+    app.setNotFoundHandler((req, reply) => {
+      if (req.url.startsWith("/api/")) return reply.code(404).send({ error: "Hittades inte" });
+      return reply.sendFile("index.html");
+    });
+  }
+
+  return app;
+}

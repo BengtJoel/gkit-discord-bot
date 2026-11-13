@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: guildbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guildbot}
+      POSTGRES_DB: guildbot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guildbot"]
+      interval: 5s
+      retries: 10
+
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://guildbot:${POSTGRES_PASSWORD:-guildbot}@db:5432/guildbot
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Only reachable from the server itself; expose to the internet via Cloudflare Tunnel (below)
+      - "127.0.0.1:3000:3000"
+
+  # Optional: public HTTPS without opening ports on your router.
+  # Create a tunnel in Cloudflare Zero Trust → Networks → Tunnels, point the public hostname to http://bot:3000,
+  # put the token in .env as CLOUDFLARE_TUNNEL_TOKEN and start with:  docker compose --profile tunnel up -d
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on: [bot]
+    profiles: [tunnel]
+
+volumes:
+  pgdata:
