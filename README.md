@@ -5,7 +5,7 @@ Schemat är byggt per `guild_id` så att det kan flyttas in i GuildKit/Supabase 
 
 **Moduler:** Levels (samma XP-kurva som MEE6) · Reaction roles · Välkomst/autoroller · Moderering med ärenden, eskalering,
 tillfälliga bans och immunitetsroller · Automod · Serverlogg · Egna slash-kommandon · Schemalagda meddelanden ·
-"Skapa en kanal" (tillfälliga röstkanaler) · Aktivitetsrapporter (meddelanden, röst, medlemsflöde, heatmap, inaktiva
+"Skapa en kanal" (tillfälliga röstkanaler) · Botprofil per server (namn, bild, banner, bio, färg) · Aktivitetsrapporter (meddelanden, röst, medlemsflöde, heatmap, inaktiva
 medlemmar, CSV-export) · Import från MEE6.
 
 **Språk:** engelska och svenska. Botens språk i Discord väljs per server under Inställningar (standard: serverns

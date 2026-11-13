@@ -9,7 +9,7 @@ import {
 } from "discord.js";
 import { and, desc, eq, sql as dsql } from "drizzle-orm";
 import { db, schema } from "../../db/index.js";
-import { getModule } from "../../settings.js";
+import { brandColor, getModule } from "../../settings.js";
 import { defineCommands } from "../registry.js";
 import { recordEvent } from "./activity.js";
 import { log } from "../../lib/log.js";
@@ -354,7 +354,7 @@ export function registerModeration() {
           (r) => `**#${r.caseNumber}** ${actionName(tu.lang, r.action)} · <t:${Math.floor(r.createdAt.getTime() / 1000)}:d> · ${r.reason || "—"}`,
         );
         return i.reply({
-          embeds: [new EmbedBuilder().setColor(0x8b5cf6).setTitle(tu("moderation.casesTitle", { user: user.username })).setDescription(lines.join("\n"))],
+          embeds: [new EmbedBuilder().setColor(await brandColor(i.guildId)).setTitle(tu("moderation.casesTitle", { user: user.username })).setDescription(lines.join("\n"))],
           ...eph,
         });
       },

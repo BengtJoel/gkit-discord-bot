@@ -15,6 +15,7 @@ import { handleCustomCommand, listCustomCommands, toCommandJSON } from "./module
 import { startTimers } from "./modules/timers.js";
 import { registerTempVoice } from "./modules/tempVoice.js";
 import { registerServerLog } from "./modules/serverLog.js";
+import { registerBranding } from "./modules/branding.js";
 import { startJobWorker, stopJobWorker } from "../core/jobs.js";
 import { pruneActionLog } from "../core/actions.js";
 
@@ -70,6 +71,7 @@ export async function startBot(token: string) {
   registerAutomod(client);
   registerTempVoice(client);
   registerServerLog(client);
+  registerBranding(client);
 
   client.once(Events.ClientReady, async (c) => {
     log.info({ tag: c.user.tag, guilds: c.guilds.cache.size }, "Bot ready");

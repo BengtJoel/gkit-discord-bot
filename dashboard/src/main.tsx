@@ -21,6 +21,7 @@ import { Timers } from "./pages/Timers";
 import { TempVoice } from "./pages/TempVoice";
 import { Settings } from "./pages/Settings";
 import { ServerLog } from "./pages/ServerLog";
+import { BotProfile } from "./pages/BotProfile";
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: (n, e) => n < 2 && !("status" in (e as object) && [401, 403, 404].includes((e as unknown as { status: number }).status)) } },
@@ -49,6 +50,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="voice" element={<TempVoice />} />
               <Route path="server-log" element={<ServerLog />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="profile" element={<BotProfile />} />
             </Route>
           </Routes>
         </BrowserRouter>

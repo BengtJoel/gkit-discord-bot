@@ -11,6 +11,7 @@ import { registerAuth } from "./auth.js";
 import { registerGuildRoutes } from "./routes/guild.js";
 import { registerFeatureRoutes } from "./routes/features.js";
 import { registerReportRoutes } from "./routes/reports.js";
+import { registerBrandingRoutes } from "./routes/branding.js";
 import { apiError, ApiError } from "./errors.js";
 
 export async function buildApi() {
@@ -41,6 +42,7 @@ export async function buildApi() {
   registerGuildRoutes(app);
   registerFeatureRoutes(app);
   registerReportRoutes(app);
+  registerBrandingRoutes(app);
 
   // Serve the built dashboard (single page app) if present
   const here = path.dirname(fileURLToPath(import.meta.url));

@@ -18,6 +18,7 @@ import {
   ChevronsUpDown,
   Menu,
   FileClock,
+  Palette,
 } from "lucide-react";
 import { useGuildQuery, GuildProvider } from "../lib/guild";
 import { ApiError } from "../lib/api";
@@ -54,6 +55,7 @@ const sections: { title: TKey; items: NavItem[] }[] = [
   {
     title: "dash.nav.server",
     items: [
+      { to: "profile", label: "dash.nav.profile", icon: Palette },
       { to: "import", label: "dash.nav.import", icon: Download },
       { to: "settings", label: "dash.nav.settings", icon: Settings },
     ],

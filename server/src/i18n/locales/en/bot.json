@@ -330,6 +330,10 @@
     "messageNotFound": "Couldn't find the message",
     "missingPermission": "The bot is missing the {{permission}} permission",
     "roleTooHigh": "The role {{role}} is above the bot's highest role",
-    "dmClosed": "The user has closed their DMs"
+    "dmClosed": "The user has closed their DMs",
+    "imageFormat": "Use a PNG, JPEG, GIF or WebP image",
+    "imageTooLarge": "The image is too large (max {{mb}} MB)",
+    "discordRateLimited": "Discord limits how often the profile can change. Wait a few minutes and try again.",
+    "discordRejected": "Discord rejected the change"
   }
 }

@@ -34,6 +34,7 @@ export const botPermissions = new PermissionsBitField([
   PermissionFlagsBits.MoveMembers,
   PermissionFlagsBits.Connect,
   PermissionFlagsBits.ViewAuditLog,
+  PermissionFlagsBits.ChangeNickname,
 ]).bitfield;
 
 export function inviteUrl(guildId?: string) {

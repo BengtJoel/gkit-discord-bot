@@ -32,6 +32,7 @@ export type AutomodAction = "delete" | "delete_warn" | "delete_timeout";
 
 export interface ModuleConfigs {
   general: { language: "auto" | "en" | "sv" };
+  branding: { nickname: string | null; bio: string; color: string };
   serverLog: {
     channels: Record<ServerLogCategory, string | null>;
     ignoredChannelIds: string[];

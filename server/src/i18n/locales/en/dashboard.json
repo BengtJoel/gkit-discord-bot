@@ -87,7 +87,8 @@
       "tempVoice": "Create a channel",
       "server": "Server",
       "import": "Import from MEE6",
-      "settings": "Settings"
+      "settings": "Settings",
+      "profile": "Bot profile"
     },
     "periods": {
       "days_one": "{{count}} day",
@@ -505,6 +506,29 @@
       "auditLogHint": "Who changed what in the dashboard.",
       "noChanges": "No changes yet",
       "by": "by {{user}}"
+    },
+    "profile": {
+      "description": "How the bot looks on this server: name, picture, banner, bio and the colour of its posts. It only changes here – other servers see their own profile.",
+      "identity": "Name and colour",
+      "nickname": "Name on this server",
+      "nicknameHint": "Empty = the bot's normal name.",
+      "bio": "About",
+      "bioHint": "Shown when someone clicks the bot. {{n}} characters left.",
+      "color": "Accent colour",
+      "colorHint": "Used in the bot's embeds: /rank, the leaderboard, reaction roles and more.",
+      "images": "Picture and banner",
+      "imagesHint": "PNG, JPEG, GIF or WebP, max {{mb}} MB. Saved as soon as you pick a file.",
+      "avatar": "Profile picture",
+      "avatarHint": "Square, at least 256×256 px.",
+      "banner": "Banner",
+      "bannerHint": "Wide, about 680×240 px. Without a banner the accent colour is shown.",
+      "upload": "Upload",
+      "resetAvatar": "Use default",
+      "removeBanner": "Remove",
+      "imageSaved": "The picture is updated in Discord",
+      "preview": "Preview",
+      "onlyOn": "Profile on {{server}}",
+      "sampleEmbedTitle": "Example post"
     }
   }
 }

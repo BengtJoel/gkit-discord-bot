@@ -112,6 +112,16 @@ export const moduleSchemas = {
     ignoredChannelIds: ids,
     inactiveDays: z.number().int().min(1).max(365).default(30),
   }),
+  /** How the bot looks on this server. Avatar and banner are stored by Discord, not here. */
+  branding: z.object({
+    nickname: z.string().max(32).nullable().default(null),
+    bio: z.string().max(190).default(""),
+    /** Accent colour for the bot's embeds (rank, leaderboard, reaction roles…) */
+    color: z
+      .string()
+      .regex(/^#[0-9a-f]{6}$/i)
+      .default("#8b5cf6"),
+  }),
   serverLog: z.object({
     /** One channel per category; null = that category is not logged */
     channels: z
@@ -138,7 +148,7 @@ export type ModuleConfig<M extends ModuleName> = z.infer<(typeof moduleSchemas)[
 export const moduleNames = Object.keys(moduleSchemas) as ModuleName[];
 
 /** Modules that are on by default when the bot joins a server */
-const defaultEnabled: Partial<Record<ModuleName, boolean>> = { general: true, activity: true, moderation: true };
+const defaultEnabled: Partial<Record<ModuleName, boolean>> = { general: true, branding: true, activity: true, moderation: true };
 
 export function isModule(name: string): name is ModuleName {
   return name in moduleSchemas;
@@ -208,4 +218,10 @@ export async function getAllModules(guildId: string) {
   const out: Record<string, ModuleState<ModuleName>> = {};
   for (const m of moduleNames) out[m] = await getModule(guildId, m);
   return out;
+}
+
+/** The server's brand colour as a number for EmbedBuilder.setColor */
+export async function brandColor(guildId: string): Promise<number> {
+  const { config } = await getModule(guildId, "branding");
+  return parseInt(config.color.slice(1), 16);
 }

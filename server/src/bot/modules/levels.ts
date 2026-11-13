@@ -1,7 +1,7 @@
 import { Events, SlashCommandBuilder, EmbedBuilder, MessageFlags, type Client, type GuildMember, type Message } from "discord.js";
 import { and, desc, eq, gt, sql as dsql } from "drizzle-orm";
 import { db, schema } from "../../db/index.js";
-import { enabledConfig, getModule, type ModuleConfig } from "../../settings.js";
+import { brandColor, enabledConfig, getModule, type ModuleConfig } from "../../settings.js";
 import { renderTemplate } from "../../lib/template.js";
 import { defineCommands } from "../registry.js";
 import { recordEvent } from "./activity.js";
@@ -166,7 +166,7 @@ export function registerLevels(client: Client) {
         if (!r) return i.reply({ content: userT(i)("levels.noXp", { user: `${user}` }), flags: MessageFlags.Ephemeral });
         const tr = await guildT(i.guild);
         const embed = new EmbedBuilder()
-          .setColor(0x8b5cf6)
+          .setColor(await brandColor(i.guildId))
           .setAuthor({ name: user.username, iconURL: user.displayAvatarURL() })
           .addFields(
             { name: tr("levels.rank"), value: `#${r.rank}`, inline: true },
@@ -205,7 +205,7 @@ export function registerLevels(client: Client) {
           }),
         );
         return i.reply({
-          embeds: [new EmbedBuilder().setColor(0x8b5cf6).setTitle(tr("levels.leaderboardTitle", { server: i.guild.name })).setDescription(lines.join("\n"))],
+          embeds: [new EmbedBuilder().setColor(await brandColor(i.guildId)).setTitle(tr("levels.leaderboardTitle", { server: i.guild.name })).setDescription(lines.join("\n"))],
           allowedMentions: { parse: [] },
         });
       },

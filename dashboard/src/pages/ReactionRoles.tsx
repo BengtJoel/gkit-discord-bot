@@ -65,7 +65,7 @@ export function ReactionRoles() {
         <Button
           variant="primary"
           icon={<Plus className="size-4" />}
-          onClick={() => setDraft({ channelId: "", messageId: null, title: "", description: "", color: "#8b5cf6", mode: "normal", entries: [{ emoji: "", roleId: "" }] })}
+          onClick={() => setDraft({ channelId: "", messageId: null, title: "", description: "", color: g.modules.branding.config.color, mode: "normal", entries: [{ emoji: "", roleId: "" }] })}
         >
           {t("dash.rr.new")}
         </Button>

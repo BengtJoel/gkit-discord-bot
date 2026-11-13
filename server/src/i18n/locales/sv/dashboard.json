@@ -87,7 +87,8 @@
       "tempVoice": "Skapa en kanal",
       "server": "Server",
       "import": "Importera från MEE6",
-      "settings": "Inställningar"
+      "settings": "Inställningar",
+      "profile": "Botprofil"
     },
     "periods": {
       "days_one": "{{count}} dag",
@@ -505,6 +506,29 @@
       "auditLogHint": "Vem som har ändrat vad i dashboarden.",
       "noChanges": "Inga ändringar ännu",
       "by": "av {{user}}"
+    },
+    "profile": {
+      "description": "Hur boten ser ut på den här servern: namn, bild, banner, bio och färgen på dess inlägg. Det gäller bara här, andra servrar ser sin egen profil.",
+      "identity": "Namn och färg",
+      "nickname": "Namn på servern",
+      "nicknameHint": "Tomt = botens vanliga namn.",
+      "bio": "Om",
+      "bioHint": "Visas när någon klickar på boten. {{n}} tecken kvar.",
+      "color": "Accentfärg",
+      "colorHint": "Används i botens inlägg: /rank, topplistan, reaction roles med mera.",
+      "images": "Bild och banner",
+      "imagesHint": "PNG, JPEG, GIF eller WebP, max {{mb}} MB. Sparas direkt när du väljer en fil.",
+      "avatar": "Profilbild",
+      "avatarHint": "Kvadratisk, minst 256×256 px.",
+      "banner": "Banner",
+      "bannerHint": "Bred, ungefär 680×240 px. Utan banner visas accentfärgen.",
+      "upload": "Ladda upp",
+      "resetAvatar": "Använd standard",
+      "removeBanner": "Ta bort",
+      "imageSaved": "Bilden är uppdaterad i Discord",
+      "preview": "Förhandsvisning",
+      "onlyOn": "Profil på {{server}}",
+      "sampleEmbedTitle": "Exempelinlägg"
     }
   }
 }

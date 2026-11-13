@@ -330,6 +330,10 @@
     "messageNotFound": "Hittade inte meddelandet",
     "missingPermission": "Boten saknar behörigheten {{permission}}",
     "roleTooHigh": "Rollen {{role}} ligger över botens högsta roll",
-    "dmClosed": "Användaren tar inte emot DM"
+    "dmClosed": "Användaren tar inte emot DM",
+    "imageFormat": "Använd en PNG-, JPEG-, GIF- eller WebP-bild",
+    "imageTooLarge": "Bilden är för stor (max {{mb}} MB)",
+    "discordRateLimited": "Discord begränsar hur ofta profilen får ändras. Vänta några minuter och försök igen.",
+    "discordRejected": "Discord godtog inte ändringen"
   }
 }
