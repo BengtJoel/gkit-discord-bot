@@ -78,6 +78,7 @@ export interface ModuleConfigs {
   reactionRoles: Record<string, never>;
   customCommands: Record<string, never>;
   timers: Record<string, never>;
+  automations: Record<string, never>;
 }
 export type ModuleName = keyof ModuleConfigs;
 export type ModuleState<M extends ModuleName = ModuleName> = { enabled: boolean; config: ModuleConfigs[M] };

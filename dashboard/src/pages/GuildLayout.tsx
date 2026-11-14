@@ -19,6 +19,7 @@ import {
   Menu,
   FileClock,
   Palette,
+  Workflow,
 } from "lucide-react";
 import { useGuildQuery, GuildProvider } from "../lib/guild";
 import { ApiError } from "../lib/api";
@@ -41,6 +42,7 @@ const sections: { title: TKey; items: NavItem[] }[] = [
   {
     title: "dash.nav.modules",
     items: [
+      { to: "automations", label: "dash.nav.automations", icon: Workflow, module: "automations" },
       { to: "levels", label: "dash.nav.levels", icon: TrendingUp, module: "levels" },
       { to: "welcome", label: "dash.nav.welcome", icon: DoorOpen, module: "welcome" },
       { to: "reaction-roles", label: "dash.nav.reactionRoles", icon: SmilePlus, module: "reactionRoles" },
@@ -85,6 +87,9 @@ export function GuildLayout() {
   const name = g.name ?? t("dash.common.devMode");
   const sidebar = (
     <nav className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-5 pt-4 text-sm font-semibold tracking-tight">
+        <img src="/logo.png" alt="" className="size-6" /> GuildKit <span className="font-normal text-muted">Bot</span>
+      </div>
       <Link to="/" className="m-3 flex items-center gap-3 rounded-lg border border-line bg-panel-2/50 p-2.5 transition hover:border-line-2">
         <GuildIcon id={g.id} icon={g.icon} name={name} size={34} />
         <div className="min-w-0 flex-1">

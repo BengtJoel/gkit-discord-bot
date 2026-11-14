@@ -11,7 +11,9 @@ interface Entry {
   emoji: string;
   roleId: string;
   label?: string;
+  style?: "primary" | "secondary" | "success" | "danger";
 }
+type RRType = "reactions" | "buttons" | "select";
 interface RR {
   id: number;
   channelId: string;
@@ -20,6 +22,7 @@ interface RR {
   description: string;
   color: string;
   mode: "normal" | "unique" | "verify";
+  type: RRType;
   entries: Entry[];
 }
 type Draft = Omit<RR, "id"> & { id?: number };
@@ -65,7 +68,7 @@ export function ReactionRoles() {
         <Button
           variant="primary"
           icon={<Plus className="size-4" />}
-          onClick={() => setDraft({ channelId: "", messageId: null, title: "", description: "", color: g.modules.branding.config.color, mode: "normal", entries: [{ emoji: "", roleId: "" }] })}
+          onClick={() => setDraft({ channelId: "", messageId: null, title: "", description: "", color: g.modules.branding.config.color, mode: "normal", type: "buttons", entries: [{ emoji: "", roleId: "" }] })}
         >
           {t("dash.rr.new")}
         </Button>
@@ -89,7 +92,7 @@ export function ReactionRoles() {
                       <div className="font-semibold">{r.title || t("defaults.reactionRolesTitle")}</div>
                       <div className="mt-0.5 flex items-center gap-1 text-xs text-muted">
                         <Hash className="size-3" />
-                        {chan(r.channelId)} · {t(`dash.rr.modes.${r.mode}`)}
+                        {chan(r.channelId)} · {t(`dash.rr.types.${r.type ?? "reactions"}`)} · {t(`dash.rr.modes.${r.mode}`)}
                         {!r.messageId && <Badge tone="warn">{t("dash.rr.notPublished")}</Badge>}
                       </div>
                     </div>
@@ -132,7 +135,8 @@ function Editor({ draft, setDraft, onSave, saving }: { draft: Draft; setDraft: (
   const { t } = useT();
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v });
   const setEntry = (i: number, e: Partial<Entry>) => set("entries", draft.entries.map((x, j) => (j === i ? { ...x, ...e } : x)));
-  const valid = draft.channelId && draft.entries.length > 0 && draft.entries.every((e) => e.emoji && e.roleId);
+  const valid = draft.channelId && draft.entries.length > 0 && draft.entries.every((e) => e.roleId && (draft.type !== "reactions" || e.emoji)) && (draft.type !== "select" || draft.entries.length <= 25);
+  const isReactions = draft.type === "reactions";
 
   return (
     <Modal
@@ -149,6 +153,13 @@ function Editor({ draft, setDraft, onSave, saving }: { draft: Draft; setDraft: (
         </>
       }
     >
+      <Field label={t("dash.rr.type")} hint={t(`dash.rr.typeHints.${draft.type}`)}>
+        <Segmented
+          value={draft.type}
+          onChange={(v) => set("type", v)}
+          options={(["buttons", "select", "reactions"] as const).map((v) => ({ value: v, label: t(`dash.rr.types.${v}`) }))}
+        />
+      </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("dash.common.channel")}>
           <ChannelSelect value={draft.channelId || null} onChange={(v) => set("channelId", v ?? "")} clearable={false} />
@@ -187,27 +198,33 @@ function Editor({ draft, setDraft, onSave, saving }: { draft: Draft; setDraft: (
               <div className="flex-1">
                 <RoleSelect value={e.roleId || null} onChange={(roleId) => setEntry(i, { roleId })} />
               </div>
-              <input className="input w-40" placeholder={t("dash.rr.labelOptional")} value={e.label ?? ""} onChange={(ev) => setEntry(i, { label: ev.target.value || undefined })} />
+              <input className="input w-40" placeholder={t(isReactions ? "dash.rr.labelOptional" : "dash.rr.labelButton")} maxLength={80} value={e.label ?? ""} onChange={(ev) => setEntry(i, { label: ev.target.value || undefined })} />
+              {draft.type === "buttons" && (
+                <select className="input w-32" value={e.style ?? "secondary"} onChange={(ev) => setEntry(i, { style: ev.target.value as Entry["style"] })}>
+                  {(["primary", "secondary", "success", "danger"] as const).map((s) => <option key={s} value={s}>{t(`dash.buttonStyles.${s}`)}</option>)}
+                </select>
+              )}
               <Button variant="ghost" size="sm" onClick={() => set("entries", draft.entries.filter((_, j) => j !== i))}>
                 <Trash2 className="size-4" />
               </Button>
             </div>
           ))}
         </div>
-        {draft.entries.length < 20 && (
+        {!isReactions && <p className="hint mt-1">{t("dash.rr.emojiOptional")}</p>}
+        {draft.entries.length < (draft.type === "select" ? 25 : 20) && (
           <Button size="sm" className="mt-2" icon={<Plus className="size-4" />} onClick={() => set("entries", [...draft.entries, { emoji: "", roleId: "" }])}>
             {t("dash.rr.addRow")}
           </Button>
         )}
       </div>
 
-      <details className="rounded-lg border border-line px-4 py-3 text-sm">
+      {isReactions && <details className="rounded-lg border border-line px-4 py-3 text-sm">
         <summary className="cursor-pointer font-medium">{t("dash.rr.attachTitle")}</summary>
         <p className="mt-2 text-muted">
           {t("dash.rr.attachBody")}
         </p>
         <input className="input mt-2 font-mono" placeholder="123456789012345678" value={draft.messageId ?? ""} onChange={(e) => set("messageId", e.target.value.trim() || null)} />
-      </details>
+      </details>}
       {g.emojis.length === 0 && <p className="text-xs text-muted">{t("dash.rr.emojiTip")}</p>}
     </Modal>
   );

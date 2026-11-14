@@ -88,7 +88,8 @@
       "server": "Server",
       "import": "Importera från MEE6",
       "settings": "Inställningar",
-      "profile": "Botprofil"
+      "profile": "Botprofil",
+      "automations": "Automationer"
     },
     "periods": {
       "days_one": "{{count}} dag",
@@ -324,7 +325,20 @@
       "attachBody": "Klistra in meddelande-ID:t (högerklicka på meddelandet i Discord → Kopiera meddelande-ID, kräver utvecklarläge). Boten tar då över det meddelandet i stället för att posta ett nytt, och alla befintliga reaktioner ligger kvar. Stäng av reaction roles i MEE6 först.",
       "emojiTip": "Tips: du kan använda vanliga emojis som 🔥 eller serverns egna emojis.",
       "emojiPlaceholder": "Skriv eller klistra in emoji",
-      "serverEmojis": "Serverns emojis"
+      "serverEmojis": "Serverns emojis",
+      "type": "Typ",
+      "types": {
+        "buttons": "Knappar",
+        "select": "Rullgardinsmeny",
+        "reactions": "Reaktioner"
+      },
+      "typeHints": {
+        "buttons": "Medlemmar klickar på en knapp. Boten bekräftar privat vilka roller de fick.",
+        "select": "Medlemmar väljer roller i en meny. Bra för många alternativ, som klass eller spec.",
+        "reactions": "Klassiskt: medlemmar reagerar med en emoji. Fungerar även på gamla MEE6-meddelanden."
+      },
+      "labelButton": "Knapptext (valfri)",
+      "emojiOptional": "Emoji är valfritt för knappar och menyer."
     },
     "moderation": {
       "commands": "Kommandon:",
@@ -433,7 +447,22 @@
       "addRoles": "Ge roller",
       "removeRoles": "Ta bort roller",
       "allowedRoles": "Bara för roller",
-      "allowedRolesHint": "Tomt = alla får använda kommandot."
+      "allowedRolesHint": "Tomt = alla får använda kommandot.",
+      "allowedChannels": "Bara i dessa kanaler",
+      "allowedChannelsHint": "Tomt = överallt. Väljer du en kategori ingår dess kanaler.",
+      "responseMode": "Var svaret visas",
+      "modes": {
+        "channel": "I kanalen",
+        "ephemeral": "Privat",
+        "dm": "Som DM"
+      },
+      "modeHints": {
+        "channel": "Alla i kanalen ser svaret.",
+        "ephemeral": "Bara den som körde kommandot ser svaret.",
+        "dm": "Svaret skickas som privat meddelande."
+      },
+      "cooldown": "Cooldown",
+      "cooldownHint": "Per medlem. 0 = ingen."
     },
     "timers": {
       "everyDayAt": "Varje dag {{time}}",
@@ -529,6 +558,237 @@
       "preview": "Förhandsvisning",
       "onlyOn": "Profil på {{server}}",
       "sampleEmbedTitle": "Exempelinlägg"
+    },
+    "buttonStyles": {
+      "primary": "Lila",
+      "secondary": "Grå",
+      "success": "Grön",
+      "danger": "Röd"
+    },
+    "auto": {
+      "description": "Bygg egna regler: när något händer, kontrollera villkor och gör sedan saker. Roller, meddelanden, knappar, fördröjningar med mera.",
+      "new": "Ny automation",
+      "editTitle": "Redigera automation",
+      "saved": "Automationen är sparad",
+      "paused": "Pausad",
+      "emptyTitle": "Inga automationer ännu",
+      "emptyBody": "Börja från en mall, t.ex. en verifieringsknapp eller trial till raider efter 14 dagar.",
+      "conditionsCount_one": "{{count}} villkor",
+      "conditionsCount_other": "{{count}} villkor",
+      "runs_one": "{{count}} körning",
+      "runs_other": "{{count}} körningar",
+      "runLog": "Körlogg",
+      "runLogHint": "De senaste 100 körningarna. Överhoppade visar vilket villkor som stoppade dem.",
+      "allRules": "Alla automationer",
+      "noRuns": "Inget har körts ännu",
+      "duplicate": "Duplicera",
+      "confirmDelete": "Ta bort automationen? Fördröjningar som redan väntar avbryts.",
+      "pickTemplate": "Börja från en mall",
+      "blank": "Tom",
+      "blankHint": "Bygg från grunden.",
+      "tabBuild": "Bygg",
+      "tabTest": "Testa",
+      "when": "När…",
+      "if": "Bara om… (valfritt)",
+      "then": "Gör sedan…",
+      "matchAll": "Alla måste stämma",
+      "matchAny": "Något räcker",
+      "noConditions": "Inga villkor: körs varje gång.",
+      "addCondition": "Lägg till villkor",
+      "addAction": "Lägg till åtgärd",
+      "memberlessHint": "Den här triggern har ingen medlem, så medlemsåtgärder (roller, DM, timeout…) hoppas över.",
+      "advanced": "Avancerat",
+      "cooldown": "Cooldown per medlem",
+      "cooldownHint": "Regeln körs inte igen för samma medlem inom den här tiden.",
+      "limitsHint": "Säkerhetsgränser per körning: 20 åtgärder, 10 rolländringar, 5 meddelanden och 3 DM. Regler kan trigga varandra högst 3 nivåer djupt.",
+      "units": {
+        "min": "min",
+        "h": "timmar",
+        "d": "dagar"
+      },
+      "vars": {
+        "role": "Rollen",
+        "selected": "Det som valdes"
+      },
+      "triggers": {
+        "member_joined": "Medlem går med",
+        "member_left": "Medlem lämnar",
+        "message_sent": "Meddelande skickas",
+        "role_added": "Roll ges",
+        "role_removed": "Roll tas bort",
+        "button_clicked": "Knapp klickas",
+        "select_chosen": "Menyval görs",
+        "reaction_added": "Reaktion läggs till",
+        "reaction_removed": "Reaktion tas bort",
+        "level_reached": "Level nås",
+        "voice_joined": "Går in i röst",
+        "voice_left": "Lämnar röst",
+        "command_used": "Eget kommando används",
+        "schedule": "Enligt schema",
+        "inactive": "Medlem är inaktiv"
+      },
+      "triggerHints": {
+        "member_joined": "Körs när någon går med. Med regelgodkännande körs den efter att de godkänt reglerna.",
+        "member_left": "Körs när någon lämnar eller kickas. Bara meddelanden fungerar, medlemmen är borta.",
+        "message_sent": "Bottar ignoreras. Kombinera med \"meddelandet innehåller\" för att reagera på ord.",
+        "role_added": "Även när en admin eller en annan bot ger rollen. Tomt = vilken roll som helst.",
+        "role_removed": "Även när en admin eller en annan bot tar bort rollen. Tomt = vilken roll som helst.",
+        "button_clicked": "Posta ett meddelande med en knapp som har den här nyckeln, med \"Skicka meddelande\" eller panelen nedan.",
+        "select_chosen": "Posta en meny med den här nyckeln. Använd \"Roller från meny\" för att ge en roll per val.",
+        "reaction_added": "Valfritt meddelande, eller ett specifikt. För enkla rollmenyer är Reaction roles enklare.",
+        "reaction_removed": "Valfritt meddelande, eller ett specifikt.",
+        "level_reached": "Kräver modulen Levels.",
+        "voice_joined": "Tomt = vilken röstkanal som helst.",
+        "voice_left": "Tomt = vilken röstkanal som helst.",
+        "command_used": "Körs efter kommandots eget svar. Skapa kommandon under Egna kommandon.",
+        "schedule": "Körs vid bestämda tider, t.ex. en raidpåminnelse. Ingen medlem, så använd meddelanden.",
+        "inactive": "Kontrolleras en gång per dag. Körs en gång per medlem och inaktiv period (kräver aktivitetsspårning)."
+      },
+      "conditions": {
+        "has_role": "Har roll",
+        "lacks_role": "Saknar roll",
+        "in_channel": "I kanal",
+        "message_contains": "Meddelandet innehåller",
+        "message_regex": "Meddelandet matchar mönster",
+        "level": "Level",
+        "member_days": "Dagar på servern",
+        "account_days": "Kontots ålder",
+        "counter": "Räknare",
+        "selected": "Valt i menyn",
+        "chance": "Slumpchans"
+      },
+      "actions": {
+        "add_roles": "Ge roller",
+        "remove_roles": "Ta bort roller",
+        "toggle_roles": "Växla roller",
+        "temp_role": "Ge roller tillfälligt",
+        "roles_from_select": "Roller från meny",
+        "send_message": "Skicka meddelande",
+        "reply": "Svara",
+        "send_dm": "Skicka DM",
+        "log": "Logga till kanal",
+        "wait": "Vänta",
+        "delete_message": "Radera meddelandet",
+        "add_reaction": "Reagera med",
+        "timeout": "Timeout",
+        "warn": "Varna",
+        "give_xp": "Ge XP",
+        "set_nickname": "Sätt smeknamn",
+        "counter": "Ändra räknare"
+      },
+      "f": {
+        "channelsAny": "Kanaler (tomt = alla)",
+        "rolesAny": "Roller (tomt = alla)",
+        "emoji": "Emoji",
+        "messageId": "Meddelande-ID",
+        "emptyAny": "Tomt = alla",
+        "key": "Nyckel",
+        "keyHint": "Ett kort namn som verify eller klass. Bokstäver, siffror, - och _.",
+        "anyLevel": "Alla levels",
+        "command": "Kommando",
+        "commandHint": "Välj ett av dina egna kommandon.",
+        "cron": "Schema (cron)",
+        "cronHint": "minut timme dag månad veckodag, t.ex. 45 18 * * 3 = onsdagar 18:45",
+        "timezone": "Tidszon",
+        "inactiveFor": "Har inte skrivit eller suttit i röst på",
+        "anyOf": "Någon av",
+        "allOf": "Alla",
+        "addWord": "Lägg till ord…",
+        "anyWord": "Något ord",
+        "allWords": "Alla ord",
+        "wholeWord": "Bara hela ord",
+        "addValue": "Lägg till värde…",
+        "removeAfter": "Ta bort efter",
+        "mappingHint": "Menyvärde → roll. Valda värden ger sin roll, övrigas roller tas bort.",
+        "sameChannel": "Samma kanal som triggern",
+        "embed": "Embed",
+        "buttonLabel": "Knapptext",
+        "addButton": "Lägg till knapp",
+        "private": "Bara medlemmen ser det",
+        "replyHint": "Fungerar för knappar, menyer och kommandon. Annars skickas det i kanalen.",
+        "waitHint": "Upp till 30 dagar. Klarar omstarter.",
+        "deleteHint": "Raderar meddelandet som triggade regeln.",
+        "reason": "Anledning",
+        "nicknameHint": "Max 32 tecken. Fungerar inte på serverns ägare."
+      },
+      "panel": {
+        "openButton": "Posta ett meddelande med knappen",
+        "openSelect": "Posta ett meddelande med menyn",
+        "hint": "Postas en gång. Klick kör sedan den här regeln, även efter omstarter.",
+        "optionLabel": "Visad text",
+        "optionValue": "Värde",
+        "maxPick": "Max antal val",
+        "fromMapping": "Alternativen är förifyllda från \"Roller från meny\".",
+        "post": "Posta",
+        "posted": "Meddelandet är postat"
+      },
+      "sim": {
+        "intro": "Kontrollera vad som skulle hända för en riktig medlem. Inget görs i Discord.",
+        "userId": "Medlems-ID",
+        "userIdHint": "Högerklicka på medlemmen → Kopiera användar-ID (kräver utvecklarläge).",
+        "run": "Testa",
+        "message": "Meddelandetext att testa med",
+        "values": "Menyvärden att testa med",
+        "wouldRun": "Regeln skulle köras",
+        "wouldSkip": "Regeln skulle hoppas över",
+        "nothingDone": "Bara en simulering – inget ändrades."
+      },
+      "status": {
+        "ok": "Kördes",
+        "skipped": "Hoppades över",
+        "failed": "Misslyckades",
+        "partial": "Delvis"
+      },
+      "reasons": {
+        "conditions": "Villkor uppfylldes inte: {{list}}",
+        "loop": "Stoppad: regler triggade varandra för djupt",
+        "rate": "Stoppad: för många körningar på servern den här minuten"
+      },
+      "problems": {
+        "key": "Ge triggern en nyckel (bokstäver, siffror, - och _)",
+        "command": "Välj ett kommando",
+        "roles": "{{action}}: välj minst en roll",
+        "text": "{{action}}: skriv en text",
+        "log": "Logga till kanal: välj kanal och skriv en text",
+        "mapping": "Roller från meny: varje rad behöver ett värde och en roll",
+        "counter": "Räknare: ge den ett namn",
+        "condRoles": "Rollvillkor: välj minst en roll",
+        "regex": "Mönstret är ogiltigt"
+      },
+      "templates": {
+        "verify": {
+          "name": "Verifieringsknapp",
+          "body": "En knapp som ger medlemsrollen. Posta den i #regler."
+        },
+        "classPicker": {
+          "name": "Välj roll: Tank / Healer / DPS",
+          "body": "En meny där varje val ger en roll och de andra tas bort."
+        },
+        "trial": {
+          "name": "Provperiod",
+          "body": "När någon får Trial, vänta 14 dagar och posta en påminnelse till officerare."
+        },
+        "roleSync": {
+          "name": "Rollsynk",
+          "body": "När en roll ges, ge en till, t.ex. Raider → Guildmedlem."
+        },
+        "inactive": {
+          "name": "Nedgradering vid inaktivitet",
+          "body": "Efter 30 inaktiva dagar: byt roll och logga det."
+        },
+        "welcomeDm": {
+          "name": "Fördröjt välkomst-DM",
+          "body": "Skicka ett DM med bra länkar 10 minuter efter att någon gått med."
+        },
+        "levelReward": {
+          "name": "Levelbelöning med hyllning",
+          "body": "Vid level 20: ge en roll och meddela det."
+        },
+        "apply": {
+          "name": "Ansökningskommando",
+          "body": "När /ansok används: svara privat och meddela officerare."
+        }
+      }
     }
   }
 }

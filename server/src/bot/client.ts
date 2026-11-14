@@ -16,6 +16,7 @@ import { startTimers } from "./modules/timers.js";
 import { registerTempVoice } from "./modules/tempVoice.js";
 import { registerServerLog } from "./modules/serverLog.js";
 import { registerBranding } from "./modules/branding.js";
+import { registerAutomations, pruneAutomationRuns } from "../automations/wire.js";
 import { startJobWorker, stopJobWorker } from "../core/jobs.js";
 import { pruneActionLog } from "../core/actions.js";
 
@@ -72,6 +73,7 @@ export async function startBot(token: string) {
   registerTempVoice(client);
   registerServerLog(client);
   registerBranding(client);
+  registerAutomations(client);
 
   client.once(Events.ClientReady, async (c) => {
     log.info({ tag: c.user.tag, guilds: c.guilds.cache.size }, "Bot ready");
@@ -80,6 +82,8 @@ export async function startBot(token: string) {
     await startJobWorker();
     await pruneActionLog().catch(() => {});
     setInterval(() => void pruneActionLog().catch(() => {}), 86400_000).unref();
+    await pruneAutomationRuns().catch(() => {});
+    setInterval(() => void pruneAutomationRuns().catch(() => {}), 86400_000).unref();
     for (const guild of c.guilds.cache.values()) {
       await upsertGuild(guild).catch((err) => log.error({ err }, "upsertGuild"));
       await syncGuildCommands(guild).catch((err) => log.error({ err, guild: guild.id }, "command sync failed"));

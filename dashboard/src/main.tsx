@@ -18,6 +18,7 @@ import { Moderation } from "./pages/Moderation";
 import { Automod } from "./pages/Automod";
 import { CustomCommands } from "./pages/CustomCommands";
 import { Timers } from "./pages/Timers";
+import { Automations } from "./pages/Automations";
 import { TempVoice } from "./pages/TempVoice";
 import { Settings } from "./pages/Settings";
 import { ServerLog } from "./pages/ServerLog";
@@ -47,6 +48,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="automod" element={<Automod />} />
               <Route path="commands" element={<CustomCommands />} />
               <Route path="timers" element={<Timers />} />
+              <Route path="automations" element={<Automations />} />
               <Route path="voice" element={<TempVoice />} />
               <Route path="server-log" element={<ServerLog />} />
               <Route path="settings" element={<Settings />} />

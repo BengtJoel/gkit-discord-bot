@@ -138,6 +138,7 @@ export const moduleSchemas = {
     ignoredChannelIds: ids,
     ignoreBots: z.boolean().default(true),
   }),
+  automations: z.object({}),
   reactionRoles: z.object({}),
   customCommands: z.object({}),
   timers: z.object({}),

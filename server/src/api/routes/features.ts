@@ -23,13 +23,23 @@ const rrBody = z.object({
   description: z.string().max(3000).default(""),
   color: z.string().regex(/^#[0-9a-f]{6}$/i).default("#8b5cf6"),
   mode: z.enum(["normal", "unique", "verify"]).default("normal"),
+  type: z.enum(["reactions", "buttons", "select"]).default("reactions"),
   /** Attach to an existing message (e.g. one MEE6 posted) instead of posting a new one */
   messageId: snowflake.nullable().optional(),
   entries: z
-    .array(z.object({ emoji: z.string().min(1).max(100), roleId: snowflake, label: z.string().max(100).optional() }))
+    .array(
+      z.object({
+        // emoji is required for reactions, optional for buttons and menus (checked below)
+        emoji: z.string().max(100).default(""),
+        roleId: snowflake,
+        label: z.string().max(80).optional(),
+        style: z.enum(["primary", "secondary", "success", "danger"]).optional(),
+      }),
+    )
     .min(1)
     .max(20),
-});
+}).refine((b) => b.type !== "reactions" || b.entries.every((e) => e.emoji), { message: "errors.emojiRequired", path: ["entries"] })
+  .refine((b) => b.type !== "select" || b.entries.length <= 25, { message: "errors.invalidValues", path: ["entries"] });
 
 const commandBody = z.object({
   name: z.string().regex(commandNameRe, "errors.commandName"),
@@ -39,8 +49,11 @@ const commandBody = z.object({
   addRoleIds: z.array(snowflake).default([]),
   removeRoleIds: z.array(snowflake).default([]),
   allowedRoleIds: z.array(snowflake).default([]),
+  allowedChannelIds: z.array(snowflake).default([]),
+  responseMode: z.enum(["channel", "ephemeral", "dm"]).default("channel"),
+  cooldownSeconds: z.number().int().min(0).max(86400).default(0),
   enabled: z.boolean().default(true),
-});
+}).transform((b) => ({ ...b, ephemeral: b.responseMode === "ephemeral" }));
 
 const timerBody = z.object({
   name: z.string().max(100).default(""),

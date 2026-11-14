@@ -15,6 +15,13 @@
       "when": 1794600682740,
       "tag": "0001_core_jobs_action_log",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794645244014,
+      "tag": "0002_automations",
+      "breakpoints": true
     }
   ]
 }

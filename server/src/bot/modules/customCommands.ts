@@ -33,6 +33,8 @@ export function toCommandJSON(row: Row): RESTPostAPIChatInputApplicationCommands
 }
 
 /** Returns true if the interaction was a custom command (handled here) */
+const cooldowns = new Map<string, number>();
+
 export async function handleCustomCommand(i: ChatInputCommandInteraction<"cached">): Promise<boolean> {
   const t = schema.customCommands;
   const [row] = await db.select().from(t).where(and(eq(t.guildId, i.guildId), eq(t.name, i.commandName)));
@@ -48,6 +50,22 @@ export async function handleCustomCommand(i: ChatInputCommandInteraction<"cached
     await i.reply({ content: tu("customCommands.noPermission"), ...eph });
     return true;
   }
+  const channels = row.allowedChannelIds as string[];
+  const parentId = i.channel && "parentId" in i.channel ? i.channel.parentId : null;
+  if (channels.length && !channels.includes(i.channelId) && !(parentId && channels.includes(parentId))) {
+    await i.reply({ content: tu("customCommands.wrongChannel", { channels: channels.map((c) => `<#${c}>`).join(" ") }), ...eph });
+    return true;
+  }
+  if (row.cooldownSeconds) {
+    const k = `${row.id}:${i.user.id}`;
+    const until = cooldowns.get(k) ?? 0;
+    if (until > Date.now()) {
+      await i.reply({ content: tu("customCommands.cooldown", { seconds: Math.ceil((until - Date.now()) / 1000) }), ...eph });
+      return true;
+    }
+    cooldowns.set(k, Date.now() + row.cooldownSeconds * 1000);
+  }
+
   const add = row.addRoleIds as string[];
   const remove = row.removeRoleIds as string[];
   const ctx = { source: `command:${row.name}`, reason: `/${row.name}` };
@@ -60,7 +78,17 @@ export async function handleCustomCommand(i: ChatInputCommandInteraction<"cached
     guild: i.guild,
     extra: { target: target ? `<@${target.id}>` : "", channel: `<#${i.channelId}>` },
   });
-  await i.reply({ content, flags: row.ephemeral ? MessageFlags.Ephemeral : undefined });
+  const mode = row.responseMode || (row.ephemeral ? "ephemeral" : "channel");
+  if (mode === "dm") {
+    const sent = await i.user.send(content).then(() => true).catch(() => false);
+    await i.reply({ content: sent ? tu("customCommands.dmSent") : tu("customCommands.dmFailed"), ...eph });
+  } else {
+    await i.reply({ content, flags: mode === "ephemeral" ? MessageFlags.Ephemeral : undefined });
+  }
   await db.update(t).set({ uses: dsql`${t.uses} + 1` }).where(eq(t.id, row.id));
+
+  // Let automations react to the command ("when /apply is used …")
+  const { dispatchCommandUsed } = await import("../../automations/wire.js");
+  await dispatchCommandUsed({ guild: i.guild, member: i.member, userId: i.user.id, channelId: i.channelId }, row.name).catch(() => {});
   return true;
 }

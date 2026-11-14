@@ -4,7 +4,7 @@ import { Pencil, Plus, TerminalSquare, Trash2 } from "lucide-react";
 import { api, fmtNum } from "../lib/api";
 import { useGuild, useModuleForm } from "../lib/guild";
 import { ModuleShell } from "../components/ModuleShell";
-import { Badge, Button, Card, Empty, Field, Modal, RoleMultiSelect, Spinner, TemplateInput, Toggle, useToast } from "../components/ui";
+import { Badge, Button, Card, ChannelMultiSelect, Empty, Field, Modal, NumberInput, RoleMultiSelect, Segmented, Spinner, TemplateInput, Toggle, useToast } from "../components/ui";
 import { useT } from "../lib/i18n";
 
 interface Cmd {
@@ -12,14 +12,16 @@ interface Cmd {
   name: string;
   description: string;
   response: string;
-  ephemeral: boolean;
+  responseMode: "channel" | "ephemeral" | "dm";
+  allowedChannelIds: string[];
+  cooldownSeconds: number;
   addRoleIds: string[];
   removeRoleIds: string[];
   allowedRoleIds: string[];
   enabled: boolean;
   uses?: number;
 }
-const blank: Cmd = { name: "", description: "", response: "", ephemeral: false, addRoleIds: [], removeRoleIds: [], allowedRoleIds: [], enabled: true };
+const blank: Cmd = { name: "", description: "", response: "", responseMode: "channel", allowedChannelIds: [], cooldownSeconds: 0, addRoleIds: [], removeRoleIds: [], allowedRoleIds: [], enabled: true };
 
 export function CustomCommands() {
   const f = useModuleForm("customCommands");
@@ -63,7 +65,8 @@ export function CustomCommands() {
                 <span className="font-mono text-sm font-medium text-accent-2">/{c.name}</span>
                 <span className="flex-1 truncate text-sm text-muted">{c.response}</span>
                 {!c.enabled && <Badge>{t("dash.module.off")}</Badge>}
-                {c.ephemeral && <Badge>{t("dash.commands.private")}</Badge>}
+                {c.responseMode !== "channel" && <Badge>{t(`dash.commands.modes.${c.responseMode}`)}</Badge>}
+                {c.cooldownSeconds > 0 && <Badge>{c.cooldownSeconds} {t("dash.units.sec")}</Badge>}
                 <span className="text-xs text-muted tabular-nums">{t("dash.commands.uses", { count: c.uses ?? 0, n: fmtNum(c.uses) })}</span>
                 <Button variant="ghost" size="sm" onClick={() => setDraft(c)}><Pencil className="size-4" /></Button>
                 <Button variant="ghost" size="sm" onClick={() => confirm(t("dash.commands.confirmDelete", { name: c.name })) && del.mutate(c.id!)}><Trash2 className="size-4" /></Button>
@@ -118,8 +121,22 @@ export function CustomCommands() {
           <Field label={t("dash.commands.allowedRoles")} hint={t("dash.commands.allowedRolesHint")}>
             <RoleMultiSelect value={draft.allowedRoleIds} onChange={(allowedRoleIds) => setDraft({ ...draft, allowedRoleIds })} />
           </Field>
+          <Field label={t("dash.commands.allowedChannels")} hint={t("dash.commands.allowedChannelsHint")}>
+            <ChannelMultiSelect value={draft.allowedChannelIds} onChange={(allowedChannelIds) => setDraft({ ...draft, allowedChannelIds })} types={["text", "category"]} />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+            <Field label={t("dash.commands.responseMode")} hint={t(`dash.commands.modeHints.${draft.responseMode}`)}>
+              <Segmented
+                value={draft.responseMode}
+                onChange={(responseMode) => setDraft({ ...draft, responseMode })}
+                options={(["channel", "ephemeral", "dm"] as const).map((v) => ({ value: v, label: t(`dash.commands.modes.${v}`) }))}
+              />
+            </Field>
+            <Field label={t("dash.commands.cooldown")} hint={t("dash.commands.cooldownHint")}>
+              <NumberInput value={draft.cooldownSeconds} onChange={(cooldownSeconds) => setDraft({ ...draft, cooldownSeconds })} min={0} max={86400} suffix={t("dash.units.sec")} />
+            </Field>
+          </div>
           <div className="flex flex-wrap gap-6">
-            <label className="flex items-center gap-3 text-sm"><Toggle size="sm" checked={draft.ephemeral} onChange={(ephemeral) => setDraft({ ...draft, ephemeral })} /> {t("dash.commands.privateLong")}</label>
             <label className="flex items-center gap-3 text-sm"><Toggle size="sm" checked={draft.enabled} onChange={(enabled) => setDraft({ ...draft, enabled })} /> {t("dash.common.active")}</label>
           </div>
         </Modal>

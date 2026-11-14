@@ -88,7 +88,8 @@
       "server": "Server",
       "import": "Import from MEE6",
       "settings": "Settings",
-      "profile": "Bot profile"
+      "profile": "Bot profile",
+      "automations": "Automations"
     },
     "periods": {
       "days_one": "{{count}} day",
@@ -324,7 +325,20 @@
       "attachBody": "Paste the message ID (right-click the message in Discord → Copy Message ID, needs developer mode). The bot then takes over that message instead of posting a new one, and all existing reactions are kept. Turn off reaction roles in MEE6 first.",
       "emojiTip": "Tip: you can use normal emojis like 🔥 or the server's own emojis.",
       "emojiPlaceholder": "Type or paste an emoji",
-      "serverEmojis": "Server emojis"
+      "serverEmojis": "Server emojis",
+      "type": "Type",
+      "types": {
+        "buttons": "Buttons",
+        "select": "Drop-down menu",
+        "reactions": "Reactions"
+      },
+      "typeHints": {
+        "buttons": "Members click a button. The bot confirms privately which roles they got.",
+        "select": "Members pick roles in a menu. Good for many options, like class or spec.",
+        "reactions": "Classic: members react with an emoji. Works on old MEE6 messages too."
+      },
+      "labelButton": "Text (optional)",
+      "emojiOptional": "Emoji is optional for buttons and menus."
     },
     "moderation": {
       "commands": "Commands:",
@@ -433,7 +447,22 @@
       "addRoles": "Give roles",
       "removeRoles": "Remove roles",
       "allowedRoles": "Only for roles",
-      "allowedRolesHint": "Empty = everyone may use the command."
+      "allowedRolesHint": "Empty = everyone may use the command.",
+      "allowedChannels": "Only in these channels",
+      "allowedChannelsHint": "Empty = everywhere. Picking a category includes its channels.",
+      "responseMode": "Where to reply",
+      "modes": {
+        "channel": "In the channel",
+        "ephemeral": "Private",
+        "dm": "As a DM"
+      },
+      "modeHints": {
+        "channel": "Everyone in the channel sees the reply.",
+        "ephemeral": "Only the person who ran the command sees the reply.",
+        "dm": "The reply is sent as a private message."
+      },
+      "cooldown": "Cooldown",
+      "cooldownHint": "Per member. 0 = none."
     },
     "timers": {
       "everyDayAt": "Every day at {{time}}",
@@ -529,6 +558,237 @@
       "preview": "Preview",
       "onlyOn": "Profile on {{server}}",
       "sampleEmbedTitle": "Example post"
+    },
+    "buttonStyles": {
+      "primary": "Blurple",
+      "secondary": "Grey",
+      "success": "Green",
+      "danger": "Red"
+    },
+    "auto": {
+      "description": "Build your own rules: when something happens, check conditions, then do things. Roles, messages, buttons, delays and more.",
+      "new": "New automation",
+      "editTitle": "Edit automation",
+      "saved": "Automation saved",
+      "paused": "Paused",
+      "emptyTitle": "No automations yet",
+      "emptyBody": "Start from a template, e.g. a verification button or trial to raider after 14 days.",
+      "conditionsCount_one": "{{count}} condition",
+      "conditionsCount_other": "{{count}} conditions",
+      "runs_one": "{{count}} run",
+      "runs_other": "{{count}} runs",
+      "runLog": "Run log",
+      "runLogHint": "The latest 100 runs. Skipped runs show which condition stopped them.",
+      "allRules": "All automations",
+      "noRuns": "Nothing has run yet",
+      "duplicate": "Duplicate",
+      "confirmDelete": "Delete the automation? Delays that are already waiting are cancelled.",
+      "pickTemplate": "Start from a template",
+      "blank": "Blank",
+      "blankHint": "Build it from scratch.",
+      "tabBuild": "Build",
+      "tabTest": "Test",
+      "when": "When…",
+      "if": "Only if… (optional)",
+      "then": "Then do…",
+      "matchAll": "All must match",
+      "matchAny": "Any is enough",
+      "noConditions": "No conditions: runs every time.",
+      "addCondition": "Add condition",
+      "addAction": "Add action",
+      "memberlessHint": "This trigger has no member, so member actions (roles, DM, timeout…) are skipped.",
+      "advanced": "Advanced",
+      "cooldown": "Cooldown per member",
+      "cooldownHint": "The rule won't run again for the same member within this time.",
+      "limitsHint": "Safety limits per run: 20 actions, 10 role changes, 5 messages and 3 DMs. Rules can trigger each other at most 3 levels deep.",
+      "units": {
+        "min": "min",
+        "h": "hours",
+        "d": "days"
+      },
+      "vars": {
+        "role": "The role",
+        "selected": "What was picked"
+      },
+      "triggers": {
+        "member_joined": "Member joins",
+        "member_left": "Member leaves",
+        "message_sent": "Message is sent",
+        "role_added": "Role is given",
+        "role_removed": "Role is removed",
+        "button_clicked": "Button is clicked",
+        "select_chosen": "Menu choice is made",
+        "reaction_added": "Reaction is added",
+        "reaction_removed": "Reaction is removed",
+        "level_reached": "Level is reached",
+        "voice_joined": "Joins voice",
+        "voice_left": "Leaves voice",
+        "command_used": "Custom command is used",
+        "schedule": "On a schedule",
+        "inactive": "Member is inactive"
+      },
+      "triggerHints": {
+        "member_joined": "Runs when someone joins. With membership screening it runs after they accept the rules.",
+        "member_left": "Runs when someone leaves or is kicked. Only messages work, the member is gone.",
+        "message_sent": "Bots are ignored. Combine with \"message contains\" to react to words.",
+        "role_added": "Also when an admin or another bot gives the role. Empty = any role.",
+        "role_removed": "Also when an admin or another bot removes the role. Empty = any role.",
+        "button_clicked": "Post a message with a button that has this key, with \"Send message\" or the panel below.",
+        "select_chosen": "Post a menu with this key. Use \"Roles from menu\" to give a role per choice.",
+        "reaction_added": "Any message, or a specific one. For simple role menus, Reaction roles is easier.",
+        "reaction_removed": "Any message, or a specific one.",
+        "level_reached": "Needs the Levels module.",
+        "voice_joined": "Empty = any voice channel.",
+        "voice_left": "Empty = any voice channel.",
+        "command_used": "Runs after the command's own reply. Create commands under Custom commands.",
+        "schedule": "Runs at set times, e.g. a raid reminder. No member, so use messages.",
+        "inactive": "Checked once a day. Runs once per member and inactive period (needs Activity tracking)."
+      },
+      "conditions": {
+        "has_role": "Has role",
+        "lacks_role": "Doesn't have role",
+        "in_channel": "In channel",
+        "message_contains": "Message contains",
+        "message_regex": "Message matches pattern",
+        "level": "Level",
+        "member_days": "Days on the server",
+        "account_days": "Account age",
+        "counter": "Counter",
+        "selected": "Picked in menu",
+        "chance": "Random chance"
+      },
+      "actions": {
+        "add_roles": "Give roles",
+        "remove_roles": "Remove roles",
+        "toggle_roles": "Toggle roles",
+        "temp_role": "Give roles temporarily",
+        "roles_from_select": "Roles from menu",
+        "send_message": "Send message",
+        "reply": "Reply",
+        "send_dm": "Send DM",
+        "log": "Log to channel",
+        "wait": "Wait",
+        "delete_message": "Delete the message",
+        "add_reaction": "React with",
+        "timeout": "Timeout",
+        "warn": "Warn",
+        "give_xp": "Give XP",
+        "set_nickname": "Set nickname",
+        "counter": "Change counter"
+      },
+      "f": {
+        "channelsAny": "Channels (empty = all)",
+        "rolesAny": "Roles (empty = any)",
+        "emoji": "Emoji",
+        "messageId": "Message ID",
+        "emptyAny": "Empty = any",
+        "key": "Key",
+        "keyHint": "A short name like verify or class. Letters, digits, - and _.",
+        "anyLevel": "Any level",
+        "command": "Command",
+        "commandHint": "Pick one of your custom commands.",
+        "cron": "Schedule (cron)",
+        "cronHint": "minute hour day month weekday, e.g. 45 18 * * 3 = Wednesdays 18:45",
+        "timezone": "Time zone",
+        "inactiveFor": "Hasn't written or been in voice for",
+        "anyOf": "Any of",
+        "allOf": "All of",
+        "addWord": "Add a word…",
+        "anyWord": "Any word",
+        "allWords": "All words",
+        "wholeWord": "Whole words only",
+        "addValue": "Add a value…",
+        "removeAfter": "Remove after",
+        "mappingHint": "Menu value → role. Picked values get their role, the others' roles are removed.",
+        "sameChannel": "Same channel as the trigger",
+        "embed": "Embed",
+        "buttonLabel": "Button text",
+        "addButton": "Add button",
+        "private": "Only the member sees it",
+        "replyHint": "Works for buttons, menus and commands. Otherwise sent in the channel.",
+        "waitHint": "Up to 30 days. Survives restarts.",
+        "deleteHint": "Deletes the message that triggered the rule.",
+        "reason": "Reason",
+        "nicknameHint": "Max 32 characters. Doesn't work on the server owner."
+      },
+      "panel": {
+        "openButton": "Post a message with this button",
+        "openSelect": "Post a message with this menu",
+        "hint": "Posted once. Clicks then run this rule, also after restarts.",
+        "optionLabel": "Shown text",
+        "optionValue": "Value",
+        "maxPick": "Max picks",
+        "fromMapping": "Options are pre-filled from \"Roles from menu\".",
+        "post": "Post",
+        "posted": "The message is posted"
+      },
+      "sim": {
+        "intro": "Check what would happen for a real member. Nothing is done in Discord.",
+        "userId": "Member ID",
+        "userIdHint": "Right-click the member → Copy User ID (needs developer mode).",
+        "run": "Test",
+        "message": "Message text to test with",
+        "values": "Menu values to test with",
+        "wouldRun": "The rule would run",
+        "wouldSkip": "The rule would be skipped",
+        "nothingDone": "Simulation only – nothing was changed."
+      },
+      "status": {
+        "ok": "Ran",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "partial": "Partly"
+      },
+      "reasons": {
+        "conditions": "Condition not met: {{list}}",
+        "loop": "Stopped: rules triggered each other too deep",
+        "rate": "Stopped: too many runs on the server this minute"
+      },
+      "problems": {
+        "key": "Give the trigger a key (letters, digits, - and _)",
+        "command": "Pick a command",
+        "roles": "{{action}}: pick at least one role",
+        "text": "{{action}}: write a text",
+        "log": "Log to channel: pick a channel and write a text",
+        "mapping": "Roles from menu: every row needs a value and a role",
+        "counter": "Counter: give it a name",
+        "condRoles": "Role condition: pick at least one role",
+        "regex": "The pattern isn't valid"
+      },
+      "templates": {
+        "verify": {
+          "name": "Verification button",
+          "body": "A button that gives the member role. Post it in #rules."
+        },
+        "classPicker": {
+          "name": "Pick your role: Tank / Healer / DPS",
+          "body": "A menu where each choice gives a role and the others are removed."
+        },
+        "trial": {
+          "name": "Trial period",
+          "body": "When someone gets Trial, wait 14 days and post a reminder to officers."
+        },
+        "roleSync": {
+          "name": "Role sync",
+          "body": "When a role is given, give another one too, e.g. Raider → Guild member."
+        },
+        "inactive": {
+          "name": "Inactivity demotion",
+          "body": "After 30 inactive days: swap the role and log it."
+        },
+        "welcomeDm": {
+          "name": "Delayed welcome DM",
+          "body": "Send a DM with useful links 10 minutes after joining."
+        },
+        "levelReward": {
+          "name": "Level reward with shout-out",
+          "body": "At level 20: give a role and announce it."
+        },
+        "apply": {
+          "name": "Application command",
+          "body": "When /apply is used: reply privately and notify officers."
+        }
+      }
     }
   }
 }

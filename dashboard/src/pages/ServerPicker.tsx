@@ -20,7 +20,7 @@ export function LoginScreen() {
         <LanguageSwitcher />
       </div>
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-6 grid size-14 place-items-center rounded-2xl bg-accent text-2xl font-bold text-white shadow-[0_0_60px_-10px] shadow-accent">G</div>
+        <img src="/logo.png" alt="GuildKit" className="mx-auto mb-6 size-16 drop-shadow-[0_0_30px_rgba(125,211,252,0.35)]" />
         <h1 className="text-2xl font-semibold tracking-tight">GuildKit Bot</h1>
         <p className="mt-2 text-sm text-muted">{t("dash.login.subtitle")}</p>
         {failed && <p className="mt-4 rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-red-200">{t("errors.loginFailed")}</p>}
@@ -54,7 +54,7 @@ export function ServerPicker() {
     <div className="mx-auto max-w-5xl px-6 py-10">
       <header className="mb-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="grid size-9 place-items-center rounded-lg bg-accent font-bold text-white">G</div>
+          <img src="/logo.png" alt="" className="size-9" />
           <span className="font-semibold">GuildKit Bot</span>
         </div>
         <div className="flex items-center gap-3">

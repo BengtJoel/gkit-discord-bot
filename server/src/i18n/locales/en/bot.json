@@ -77,7 +77,11 @@
   "customCommands": {
     "disabled": "This command is turned off.",
     "noPermission": "You don't have permission to use this command.",
-    "userOption": "Optional user, shown as {target}"
+    "userOption": "Optional user, shown as {target}",
+    "wrongChannel": "This command only works in {{channels}}.",
+    "cooldown": "Wait {{seconds}} s before using this again.",
+    "dmSent": "Sent to your DMs ✉️",
+    "dmFailed": "I couldn't DM you – check that you accept DMs from server members."
   },
   "tempVoice": {
     "mustBeInTemp": "You need to be in a temporary channel.",
@@ -93,7 +97,12 @@
   },
   "reactionRoles": {
     "reason": "Reaction role",
-    "reasonUnique": "Reaction role (one at a time)"
+    "reasonUnique": "Reaction role (one at a time)",
+    "added": "✅ You got {{roles}}",
+    "removed": "➖ Removed {{roles}}",
+    "noChange": "No changes.",
+    "failed": "⚠️ Some roles couldn't be changed – an admin can see why under Settings → Bot actions.",
+    "selectPlaceholder": "Pick your roles…"
   },
   "log": {
     "titles": {
@@ -334,6 +343,14 @@
     "imageFormat": "Use a PNG, JPEG, GIF or WebP image",
     "imageTooLarge": "The image is too large (max {{mb}} MB)",
     "discordRateLimited": "Discord limits how often the profile can change. Wait a few minutes and try again.",
-    "discordRejected": "Discord rejected the change"
+    "discordRejected": "Discord rejected the change",
+    "automationKey": "Keys may only use a-z, 0-9, - and _ (max 40)",
+    "rrForeignMessage": "Buttons and menus can only be added to the bot's own messages. Use reactions, or let the bot post a new message.",
+    "invalidRegex": "Invalid pattern: {{detail}}",
+    "memberNotFound": "Couldn't find that member on the server",
+    "emojiRequired": "Every row needs an emoji when using reactions"
+  },
+  "automations": {
+    "nothingHappened": "Nothing happened — this button or menu isn't connected to an active automation."
   }
 }

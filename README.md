@@ -3,7 +3,8 @@
 En egen MEE6-ersättare som körs på din egen server. Bot, API och dashboard ligger i samma Node-process, och data sparas i Postgres.
 Schemat är byggt per `guild_id` så att det kan flyttas in i GuildKit/Supabase senare.
 
-**Moduler:** Levels (samma XP-kurva som MEE6) · Reaction roles · Välkomst/autoroller · Moderering med ärenden, eskalering,
+**Moduler:** Automationer (När → Om → Gör: roller, knappar, menyer, fördröjningar, tillfälliga roller, inaktivitet m.m.) ·
+Levels (samma XP-kurva som MEE6) · Reaction roles (knappar, meny eller reaktioner) · Välkomst/autoroller · Moderering med ärenden, eskalering,
 tillfälliga bans och immunitetsroller · Automod · Serverlogg · Egna slash-kommandon · Schemalagda meddelanden ·
 "Skapa en kanal" (tillfälliga röstkanaler) · Botprofil per server (namn, bild, banner, bio, färg) · Aktivitetsrapporter (meddelanden, röst, medlemsflöde, heatmap, inaktiva
 medlemmar, CSV-export) · Import från MEE6.

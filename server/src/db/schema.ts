@@ -73,6 +73,8 @@ export const reactionRoleMessages = pgTable(
     color: text("color").notNull().default("#8b5cf6"),
     /** normal: toggle freely, unique: only one role from this message, verify: add only, never removed */
     mode: text("mode").notNull().default("normal"),
+    /** reactions | buttons | select */
+    type: text("type").notNull().default("reactions"),
     /** [{ emoji: "🔥" | "<:name:id>", roleId: "…", label?: "…" }] */
     entries: jsonb("entries").notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -117,6 +119,11 @@ export const customCommands = pgTable(
     removeRoleIds: jsonb("remove_role_ids").notNull().default([]),
     /** If non-empty only these roles may run it */
     allowedRoleIds: jsonb("allowed_role_ids").notNull().default([]),
+    /** If non-empty the command only works in these channels */
+    allowedChannelIds: jsonb("allowed_channel_ids").notNull().default([]),
+    /** channel | ephemeral | dm  (ephemeral column above is kept for old rows) */
+    responseMode: text("response_mode").notNull().default("channel"),
+    cooldownSeconds: integer("cooldown_seconds").notNull().default(0),
     enabled: boolean("enabled").notNull().default(true),
     uses: integer("uses").notNull().default(0),
   },
@@ -292,4 +299,62 @@ export const actionLog = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("action_log_guild_time").on(t.guildId, t.createdAt), index("action_log_source").on(t.guildId, t.source)],
+);
+
+/* ---------- Automations ---------- */
+
+/**
+ * A rule: one trigger, conditions (all/any) and an ordered list of actions.
+ * trigger/conditions/actions are validated by the zod schemas in automations/types.ts.
+ */
+export const automations = pgTable(
+  "automations",
+  {
+    id: serial("id").primaryKey(),
+    guildId: text("guild_id").notNull(),
+    name: text("name").notNull().default(""),
+    enabled: boolean("enabled").notNull().default(true),
+    trigger: jsonb("trigger").notNull(),
+    conditions: jsonb("conditions").notNull().default([]),
+    /** all | any */
+    match: text("match").notNull().default("all"),
+    actions: jsonb("actions").notNull().default([]),
+    /** Per member: the rule won't run again for the same member within this many seconds */
+    cooldownSeconds: integer("cooldown_seconds").notNull().default(0),
+    runCount: integer("run_count").notNull().default(0),
+    lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("automations_guild").on(t.guildId)],
+);
+
+/** One row per time a rule was triggered: ran, skipped (and why) or failed */
+export const automationRuns = pgTable(
+  "automation_runs",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    automationId: integer("automation_id").notNull(),
+    guildId: text("guild_id").notNull(),
+    userId: text("user_id"),
+    /** ok | skipped | failed | partial */
+    status: text("status").notNull(),
+    reason: text("reason"),
+    detail: jsonb("detail").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("automation_runs_rule").on(t.automationId, t.createdAt), index("automation_runs_guild").on(t.guildId, t.createdAt)],
+);
+
+/** Per-member counters automations can increment and test (e.g. "verified attempts") */
+export const memberCounters = pgTable(
+  "member_counters",
+  {
+    guildId: text("guild_id").notNull(),
+    userId: text("user_id").notNull(),
+    key: text("key").notNull(),
+    value: integer("value").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guildId, t.userId, t.key] })],
 );

@@ -77,7 +77,11 @@
   "customCommands": {
     "disabled": "Det här kommandot är avstängt.",
     "noPermission": "Du har inte behörighet att använda det här kommandot.",
-    "userOption": "Valfri användare, visas som {target}"
+    "userOption": "Valfri användare, visas som {target}",
+    "wrongChannel": "Det här kommandot fungerar bara i {{channels}}.",
+    "cooldown": "Vänta {{seconds}} s innan du använder det igen.",
+    "dmSent": "Skickat till dina DM ✉️",
+    "dmFailed": "Jag kunde inte skicka DM – kontrollera att du tar emot DM från servermedlemmar."
   },
   "tempVoice": {
     "mustBeInTemp": "Du måste sitta i en tillfällig kanal.",
@@ -93,7 +97,12 @@
   },
   "reactionRoles": {
     "reason": "Reaction role",
-    "reasonUnique": "Reaction role (en åt gången)"
+    "reasonUnique": "Reaction role (en åt gången)",
+    "added": "✅ Du fick {{roles}}",
+    "removed": "➖ Tog bort {{roles}}",
+    "noChange": "Inga ändringar.",
+    "failed": "⚠️ Vissa roller kunde inte ändras – en admin ser varför under Inställningar → Botens åtgärder.",
+    "selectPlaceholder": "Välj dina roller…"
   },
   "log": {
     "titles": {
@@ -334,6 +343,14 @@
     "imageFormat": "Använd en PNG-, JPEG-, GIF- eller WebP-bild",
     "imageTooLarge": "Bilden är för stor (max {{mb}} MB)",
     "discordRateLimited": "Discord begränsar hur ofta profilen får ändras. Vänta några minuter och försök igen.",
-    "discordRejected": "Discord godtog inte ändringen"
+    "discordRejected": "Discord godtog inte ändringen",
+    "automationKey": "Nycklar får bara innehålla a-z, 0-9, - och _ (max 40)",
+    "rrForeignMessage": "Knappar och menyer kan bara läggas på botens egna meddelanden. Använd reaktioner, eller låt boten posta ett nytt meddelande.",
+    "invalidRegex": "Ogiltigt mönster: {{detail}}",
+    "memberNotFound": "Hittade inte medlemmen på servern",
+    "emojiRequired": "Varje rad behöver en emoji när reaktioner används"
+  },
+  "automations": {
+    "nothingHappened": "Inget hände – knappen eller menyn är inte kopplad till någon aktiv automation."
   }
 }
