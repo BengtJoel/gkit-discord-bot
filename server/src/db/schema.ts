@@ -12,7 +12,10 @@ import {
   index,
   uniqueIndex,
   serial,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 
 /**
  * Discord snowflakes are stored as text (they exceed JS safe integers).
@@ -357,4 +360,36 @@ export const memberCounters = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [primaryKey({ columns: [t.guildId, t.userId, t.key] })],
+);
+
+/** Images uploaded in the dashboard (welcome banners, embed images). Sent to Discord as attachments. */
+export const media = pgTable(
+  "media",
+  {
+    id: serial("id").primaryKey(),
+    guildId: text("guild_id").notNull(),
+    name: text("name").notNull().default(""),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    data: bytea("data").notNull(),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("media_guild").on(t.guildId)],
+);
+
+/** Messages built with the embed builder. Kept so they can be edited in place later. */
+export const embedMessages = pgTable(
+  "embed_messages",
+  {
+    id: serial("id").primaryKey(),
+    guildId: text("guild_id").notNull(),
+    name: text("name").notNull().default(""),
+    channelId: text("channel_id").notNull(),
+    messageId: text("message_id"),
+    design: jsonb("design").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("embed_messages_guild").on(t.guildId)],
 );

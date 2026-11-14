@@ -89,7 +89,8 @@
       "import": "Importera från MEE6",
       "settings": "Inställningar",
       "profile": "Botprofil",
-      "automations": "Automationer"
+      "automations": "Automationer",
+      "embeds": "Embed-meddelanden"
     },
     "periods": {
       "days_one": "{{count}} dag",
@@ -789,6 +790,56 @@
           "body": "När /ansok används: svara privat och meddela officerare."
         }
       }
+    },
+    "design": {
+      "text": "Meddelandetext",
+      "textHintEmbed": "Valfritt. Visas ovanför embeden. Nämningar pingar bara härifrån, inte inifrån embeden.",
+      "useEmbed": "Embed",
+      "useEmbedHint": "Ett inramat kort med färgad kant, rubrik, fält och bild.",
+      "title": "Rubrik",
+      "titleUrl": "Länk på rubriken (valfri)",
+      "author": "Överrad",
+      "thumbnail": "Liten bild",
+      "subject": {
+        "none": "Ingen",
+        "member": "Medlemmen",
+        "server": "Servern"
+      },
+      "fields": "Fält",
+      "fieldName": "Namn",
+      "fieldValue": "Värde",
+      "inline": "Bredvid varandra",
+      "addField": "Lägg till fält",
+      "footer": "Sidfot",
+      "timestamp": "Visa tid",
+      "banner": "Bannerbild",
+      "bannerHint": "Visas under texten, eller som embedens stora bild.",
+      "upload": "Ladda upp",
+      "link": "Länk",
+      "removeImage": "Ta bort",
+      "dropImage": "Klicka eller släpp en bild här",
+      "imageLimits": "PNG, JPG, GIF eller WebP, max {{mb}} MB. 1100 × 400 px ser bra ut.",
+      "preview": "Förhandsvisning",
+      "today": "Idag 18:45",
+      "sendTest": "Skicka test",
+      "testHint": "Postar meddelandet en gång i kanalen, som om du precis gått med",
+      "testSent": "Testmeddelandet är skickat"
+    },
+    "embeds": {
+      "description": "Bygg snygga meddelanden med embeds, fält och bilder och posta dem som boten. Redigera dem senare så uppdateras meddelandet i Discord.",
+      "new": "Nytt meddelande",
+      "editTitle": "Redigera meddelande",
+      "post": "Posta",
+      "posted": "Meddelandet är postat",
+      "updated": "Meddelandet är uppdaterat i Discord",
+      "emptyTitle": "Inga meddelanden ännu",
+      "emptyBody": "T.ex. regler, raidtider, en infotavla eller ett utskick.",
+      "untitled": "Namnlöst",
+      "name": "Namn i listan",
+      "nameHint": "Visas bara här i dashboarden.",
+      "moveHint": "Väljer du en annan kanal postas det där och det gamla meddelandet tas bort.",
+      "confirmDelete": "Ta bort meddelandet från listan?",
+      "alsoDeleteMessage": "Radera det i Discord också? (Avbryt = behåll det i kanalen)"
     }
   }
 }

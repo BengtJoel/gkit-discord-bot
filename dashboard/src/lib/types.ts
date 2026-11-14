@@ -1,3 +1,4 @@
+import type { Design } from "../components/MessageDesigner";
 export interface Me {
   user: { id: string; username: string; avatar: string | null };
   guilds: { id: string; name: string; icon: string | null; botPresent: boolean }[];
@@ -51,9 +52,9 @@ export interface ModuleConfigs {
     removeOnDemote: boolean;
   };
   welcome: {
-    join: { enabled: boolean; channelId: string | null; message: string };
-    dm: { enabled: boolean; message: string };
-    leave: { enabled: boolean; channelId: string | null; message: string };
+    join: { enabled: boolean; channelId: string | null } & Design;
+    dm: { enabled: boolean } & Design;
+    leave: { enabled: boolean; channelId: string | null } & Design;
     autoRoleIds: string[];
   };
   moderation: {
@@ -79,6 +80,7 @@ export interface ModuleConfigs {
   customCommands: Record<string, never>;
   timers: Record<string, never>;
   automations: Record<string, never>;
+  embeds: Record<string, never>;
 }
 export type ModuleName = keyof ModuleConfigs;
 export type ModuleState<M extends ModuleName = ModuleName> = { enabled: boolean; config: ModuleConfigs[M] };

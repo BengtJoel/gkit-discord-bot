@@ -20,6 +20,7 @@ import {
   FileClock,
   Palette,
   Workflow,
+  LayoutTemplate,
 } from "lucide-react";
 import { useGuildQuery, GuildProvider } from "../lib/guild";
 import { ApiError } from "../lib/api";
@@ -46,6 +47,7 @@ const sections: { title: TKey; items: NavItem[] }[] = [
       { to: "levels", label: "dash.nav.levels", icon: TrendingUp, module: "levels" },
       { to: "welcome", label: "dash.nav.welcome", icon: DoorOpen, module: "welcome" },
       { to: "reaction-roles", label: "dash.nav.reactionRoles", icon: SmilePlus, module: "reactionRoles" },
+      { to: "embeds", label: "dash.nav.embeds", icon: LayoutTemplate, module: "embeds" },
       { to: "moderation", label: "dash.nav.moderation", icon: Gavel, module: "moderation" },
       { to: "automod", label: "dash.nav.automod", icon: ShieldCheck, module: "automod" },
       { to: "server-log", label: "dash.nav.serverLog", icon: FileClock, module: "serverLog" },

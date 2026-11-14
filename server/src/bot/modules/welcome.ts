@@ -1,6 +1,6 @@
 import { Events, type Client } from "discord.js";
-import { enabledConfig } from "../../settings.js";
-import { renderTemplate } from "../../lib/template.js";
+import { brandColor, enabledConfig } from "../../settings.js";
+import { buildDesigned } from "../../lib/design.js";
 import { recordEvent, upsertMember } from "./activity.js";
 import { guildT } from "../../i18n/index.js";
 import { addRoles, sendDm, sendToChannel } from "../../core/actions.js";
@@ -16,9 +16,15 @@ export function registerWelcome(client: Client) {
     const ctx = { member, guild: member.guild };
     const action = { source: "welcome", reason: tr("welcome.autoroleReason") };
     if (cfg.autoRoleIds.length && !member.pending) await addRoles(member, cfg.autoRoleIds, action);
-    if (cfg.join.enabled && cfg.join.channelId)
-      await sendToChannel(member.guild, cfg.join.channelId, renderTemplate(cfg.join.message || tr("defaults.welcomeJoin"), ctx), action);
-    if (cfg.dm.enabled) await sendDm(member.guild, member.user, renderTemplate(cfg.dm.message || tr("defaults.welcomeDm"), ctx), action);
+    const color = await brandColor(member.guild.id);
+    if (cfg.join.enabled && cfg.join.channelId) {
+      const payload = await buildDesigned(cfg.join, { ...ctx, brandColor: color, fallbackText: tr("defaults.welcomeJoin") });
+      await sendToChannel(member.guild, cfg.join.channelId, payload, action);
+    }
+    if (cfg.dm.enabled) {
+      const payload = await buildDesigned(cfg.dm, { ...ctx, brandColor: color, fallbackText: tr("defaults.welcomeDm") });
+      await sendDm(member.guild, member.user, payload, action);
+    }
   });
 
   // Membership screening: give autoroles once the member accepts the rules
@@ -36,11 +42,13 @@ export function registerWelcome(client: Client) {
     const cfg = await enabledConfig(member.guild.id, "welcome");
     if (!cfg?.leave.enabled || !cfg.leave.channelId) return;
     const tr = await guildT(member.guild);
-    await sendToChannel(
-      member.guild,
-      cfg.leave.channelId,
-      renderTemplate(cfg.leave.message || tr("defaults.welcomeLeave"), { member, guild: member.guild }),
-      { source: "welcome" },
-    );
+    const payload = await buildDesigned(cfg.leave, {
+      guild: member.guild,
+      user: member.user,
+      member: member.partial ? null : member,
+      brandColor: await brandColor(member.guild.id),
+      fallbackText: tr("defaults.welcomeLeave"),
+    });
+    await sendToChannel(member.guild, cfg.leave.channelId, payload, { source: "welcome" });
   });
 }

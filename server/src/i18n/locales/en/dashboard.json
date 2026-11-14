@@ -89,7 +89,8 @@
       "import": "Import from MEE6",
       "settings": "Settings",
       "profile": "Bot profile",
-      "automations": "Automations"
+      "automations": "Automations",
+      "embeds": "Embed messages"
     },
     "periods": {
       "days_one": "{{count}} day",
@@ -789,6 +790,56 @@
           "body": "When /apply is used: reply privately and notify officers."
         }
       }
+    },
+    "design": {
+      "text": "Message text",
+      "textHintEmbed": "Optional. Shown above the embed. Mentions only ping from here, not from inside the embed.",
+      "useEmbed": "Embed",
+      "useEmbedHint": "A framed card with a coloured edge, title, fields and image.",
+      "title": "Title",
+      "titleUrl": "Title link (optional)",
+      "author": "Header",
+      "thumbnail": "Small image",
+      "subject": {
+        "none": "None",
+        "member": "Member",
+        "server": "Server"
+      },
+      "fields": "Fields",
+      "fieldName": "Name",
+      "fieldValue": "Value",
+      "inline": "Side by side",
+      "addField": "Add field",
+      "footer": "Footer",
+      "timestamp": "Show time",
+      "banner": "Banner image",
+      "bannerHint": "Shown under the text, or as the embed's big image.",
+      "upload": "Upload",
+      "link": "Link",
+      "removeImage": "Remove",
+      "dropImage": "Click or drop an image here",
+      "imageLimits": "PNG, JPG, GIF or WebP, max {{mb}} MB. 1100 × 400 px looks good.",
+      "preview": "Preview",
+      "today": "Today at 18:45",
+      "sendTest": "Send test",
+      "testHint": "Posts the message once in the channel, as if you had just joined",
+      "testSent": "Test message sent"
+    },
+    "embeds": {
+      "description": "Build good-looking messages with embeds, fields and images, and post them as the bot. Edit them later and the message in Discord is updated.",
+      "new": "New message",
+      "editTitle": "Edit message",
+      "post": "Post",
+      "posted": "The message is posted",
+      "updated": "The message is updated in Discord",
+      "emptyTitle": "No messages yet",
+      "emptyBody": "E.g. rules, raid times, an info board or an announcement.",
+      "untitled": "Untitled",
+      "name": "Name in the list",
+      "nameHint": "Only shown here in the dashboard.",
+      "moveHint": "Picking another channel posts it there and removes the old message.",
+      "confirmDelete": "Remove the message from the list?",
+      "alsoDeleteMessage": "Delete it in Discord too? (Cancel = keep it in the channel)"
     }
   }
 }

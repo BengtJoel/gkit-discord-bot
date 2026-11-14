@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { designSchema } from "../src/lib/design.js";
+import { moduleSchemas } from "../src/settings.js";
 import { levelFromXp, totalXpForLevel, xpForNext } from "../src/bot/modules/levels.js";
 import { checkMessage } from "../src/bot/modules/automod.js";
 import { parseDuration, formatDuration } from "../src/bot/modules/moderation.js";
@@ -97,5 +99,21 @@ describe("settings", () => {
   });
   it("defaults the server language to auto", () => {
     expect(parseConfig("general", {}).language).toBe("auto");
+  });
+});
+
+
+describe("message designs", () => {
+  it("old welcome configs (text only) still parse, with embed off and no image", () => {
+    const cfg = moduleSchemas.welcome.parse({ join: { enabled: true, channelId: null, message: "Hej {user}" } });
+    expect(cfg.join.message).toBe("Hej {user}");
+    expect(cfg.join.embed.enabled).toBe(false);
+    expect(cfg.join.image).toEqual({ mediaId: null, url: "" });
+  });
+  it("rejects non-http image links and too many fields", () => {
+    expect(designSchema.safeParse({ image: { url: "javascript:alert(1)" } }).success).toBe(false);
+    expect(designSchema.safeParse({ image: { url: "https://example.com/b.png" } }).success).toBe(true);
+    const fields = Array.from({ length: 26 }, () => ({ name: "a", value: "b" }));
+    expect(designSchema.safeParse({ embed: { enabled: true, fields } }).success).toBe(false);
   });
 });

@@ -1,3 +1,4 @@
+import { designFields } from "./lib/design.js";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "./db/index.js";
@@ -35,21 +36,13 @@ export const moduleSchemas = {
   }),
   welcome: z.object({
     join: z
-      .object({
-        enabled: z.boolean().default(true),
-        channelId: optSnowflake,
-        message: z.string().max(2000).default(""),
-      })
+      .object({ enabled: z.boolean().default(true), channelId: optSnowflake, ...designFields })
       .prefault({}),
     dm: z
-      .object({ enabled: z.boolean().default(false), message: z.string().max(2000).default("") })
+      .object({ enabled: z.boolean().default(false), ...designFields })
       .prefault({}),
     leave: z
-      .object({
-        enabled: z.boolean().default(false),
-        channelId: optSnowflake,
-        message: z.string().max(2000).default(""),
-      })
+      .object({ enabled: z.boolean().default(false), channelId: optSnowflake, ...designFields })
       .prefault({}),
     autoRoleIds: ids,
   }),
@@ -139,6 +132,7 @@ export const moduleSchemas = {
     ignoreBots: z.boolean().default(true),
   }),
   automations: z.object({}),
+  embeds: z.object({}),
   reactionRoles: z.object({}),
   customCommands: z.object({}),
   timers: z.object({}),
@@ -149,7 +143,7 @@ export type ModuleConfig<M extends ModuleName> = z.infer<(typeof moduleSchemas)[
 export const moduleNames = Object.keys(moduleSchemas) as ModuleName[];
 
 /** Modules that are on by default when the bot joins a server */
-const defaultEnabled: Partial<Record<ModuleName, boolean>> = { general: true, branding: true, activity: true, moderation: true };
+const defaultEnabled: Partial<Record<ModuleName, boolean>> = { general: true, branding: true, activity: true, moderation: true, embeds: true };
 
 export function isModule(name: string): name is ModuleName {
   return name in moduleSchemas;
