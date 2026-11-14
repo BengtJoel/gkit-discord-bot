@@ -60,8 +60,8 @@ async function memberReport(guildId: string, q: Record<string, string | undefine
       mem as (select * from members where guild_id = ${guildId}),
       base as (
         select coalesce(m.user_id, a.user_id) as user_id,
-          coalesce(nullif(m.display_name, ''), m.username, l.username, '') as display_name,
-          coalesce(m.username, l.username, '') as username,
+          coalesce(nullif(m.display_name, ''), nullif(m.username, ''), l.username, '') as display_name,
+          coalesce(nullif(m.username, ''), l.username, '') as username,
           coalesce(m.avatar, l.avatar) as avatar,
           coalesce(m.bot, false) as bot,
           m.joined_at, m.left_at, m.last_message_at, m.last_voice_at,
@@ -255,7 +255,7 @@ export function registerReportRoutes(app: FastifyInstance) {
       return rowsOf(
         await db.execute(dsql`
           select e.id, e.type, e.user_id, e.channel_id, e.data, e.created_at,
-                 coalesce(nullif(m.display_name, ''), m.username) as display_name, m.avatar
+                 coalesce(nullif(m.display_name, ''), nullif(m.username, '')) as display_name, m.avatar
           from events e left join members m on m.guild_id = e.guild_id and m.user_id = e.user_id
           where e.guild_id = ${req.params.guildId}
             and (${type} = '' or e.type = ${type})

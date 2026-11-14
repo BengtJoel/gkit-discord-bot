@@ -1,5 +1,5 @@
-import { Events, type Client, type GuildMember, type PartialGuildMember } from "discord.js";
-import { sql as dsql } from "drizzle-orm";
+import { Events, type Client, type Guild, type GuildMember, type PartialGuildMember } from "discord.js";
+import { and, eq, isNull, notInArray, sql as dsql } from "drizzle-orm";
 import { db, schema } from "../../db/index.js";
 import { enabledConfig } from "../../settings.js";
 import { dayKey } from "../../lib/template.js";
@@ -15,7 +15,7 @@ type UserCounters = { messages: number; voiceSeconds: number; reactions: number;
 const userBuf = new Map<string, UserCounters>(); // guild|user|day
 const chanBuf = new Map<string, { messages: number; voiceSeconds: number }>(); // guild|channel|day
 const hourBuf = new Map<string, { messages: number; voiceSeconds: number }>(); // guild|day|hour
-const lastSeen = new Map<string, { message?: Date; voice?: Date }>(); // guild|user
+const lastSeen = new Map<string, { profile?: Profile; message?: Date; voice?: Date }>(); // guild|user
 
 /** Open voice sessions: guild|user -> channel + last time we accounted seconds */
 const voice = new Map<string, { channelId: string; since: number }>();
@@ -41,11 +41,59 @@ function bumpHour(guildId: string, field: "messages" | "voiceSeconds", n = 1) {
   c[field] += n;
   hourBuf.set(k, c);
 }
-function seen(guildId: string, userId: string, kind: "message" | "voice") {
+type Profile = { username: string; displayName: string; avatar: string | null; joinedAt: Date | null };
+const profileOf = (m: GuildMember): Profile => ({
+  username: m.user.username,
+  displayName: m.displayName || m.user.globalName || m.user.username,
+  avatar: m.user.avatar,
+  joinedAt: m.joinedAt ?? null,
+});
+
+function seen(guildId: string, userId: string, kind: "message" | "voice", member?: GuildMember | null) {
   const k = `${guildId}|${userId}`;
   const s = lastSeen.get(k) ?? {};
   s[kind] = new Date();
+  if (member) s.profile = profileOf(member);
   lastSeen.set(k, s);
+}
+
+/**
+ * Stores name, nickname and avatar for everyone on the server. Runs at startup and when the bot
+ * joins a server, so the reports show names even for members who haven't joined since the bot came.
+ */
+export async function syncGuildMembers(guild: Guild) {
+  const all = await guild.members.fetch().catch((err) => {
+    log.warn({ err, guildId: guild.id }, "Member sync: fetch failed");
+    return null;
+  });
+  if (!all) return 0;
+  const t = schema.members;
+  const list = [...all.values()];
+  for (let i = 0; i < list.length; i += 500) {
+    const rows = list.slice(i, i + 500).map((m) => ({ guildId: guild.id, userId: m.id, ...profileOf(m), bot: m.user.bot, leftAt: null }));
+    await db
+      .insert(t)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: [t.guildId, t.userId],
+        set: {
+          username: dsql`excluded.username`,
+          displayName: dsql`excluded.display_name`,
+          avatar: dsql`excluded.avatar`,
+          bot: dsql`excluded.bot`,
+          joinedAt: dsql`coalesce(excluded.joined_at, ${t.joinedAt})`,
+          leftAt: null,
+        },
+      });
+  }
+  // Anyone we still think is here but isn't in the full list left while the bot was offline
+  const ids = list.map((m) => m.id);
+  await db
+    .update(t)
+    .set({ leftAt: new Date() })
+    .where(and(eq(t.guildId, guild.id), isNull(t.leftAt), ids.length ? notInArray(t.userId, ids) : dsql`true`));
+  log.info({ guildId: guild.id, members: list.length }, "Member sync done");
+  return list.length;
 }
 
 export function trackCommand(guildId: string, userId: string) {
@@ -78,7 +126,7 @@ export async function upsertMember(m: GuildMember | PartialGuildMember, left = f
       guildId: m.guild.id,
       userId: m.id,
       username: m.user.username,
-      displayName: m.displayName ?? m.user.username,
+      displayName: m.displayName || m.user.globalName || m.user.username,
       avatar: m.user.avatar,
       bot: m.user.bot,
       joinedAt: m.joinedAt ?? null,
@@ -88,7 +136,7 @@ export async function upsertMember(m: GuildMember | PartialGuildMember, left = f
       target: [schema.members.guildId, schema.members.userId],
       set: {
         username: m.user.username,
-        displayName: m.displayName ?? m.user.username,
+        displayName: m.displayName || m.user.globalName || m.user.username,
         avatar: m.user.avatar,
         ...(m.joinedAt ? { joinedAt: m.joinedAt } : {}),
         leftAt: left ? new Date() : null,
@@ -181,12 +229,13 @@ export async function flushActivity() {
       const t = schema.members;
       await db
         .insert(t)
-        .values({ guildId, userId, lastMessageAt: s.message ?? null, lastVoiceAt: s.voice ?? null })
+        .values({ guildId, userId, lastMessageAt: s.message ?? null, lastVoiceAt: s.voice ?? null, ...(s.profile ?? {}) })
         .onConflictDoUpdate({
           target: [t.guildId, t.userId],
           set: {
             ...(s.message ? { lastMessageAt: s.message } : {}),
             ...(s.voice ? { lastVoiceAt: s.voice } : {}),
+            ...(s.profile ? { username: s.profile.username, displayName: s.profile.displayName, avatar: s.profile.avatar } : {}),
           },
         });
     }
@@ -203,7 +252,7 @@ export function registerActivity(client: Client) {
     bumpUser(msg.guildId, msg.author.id, "messages");
     bumpChannel(msg.guildId, msg.channelId, "messages");
     bumpHour(msg.guildId, "messages");
-    seen(msg.guildId, msg.author.id, "message");
+    seen(msg.guildId, msg.author.id, "message", msg.member);
   });
 
   client.on(Events.MessageReactionAdd, async (reaction, user) => {
@@ -233,11 +282,14 @@ export function registerActivity(client: Client) {
       if (cfg?.trackVoice && !cfg.ignoredChannelIds.includes(newS.channelId) && newS.channelId !== newS.guild.afkChannelId) {
         voice.set(k, { channelId: newS.channelId, since: Date.now() });
       }
+      seen(guildId, member.id, "voice", member);
       await recordEvent(guildId, "voice_join", { userId: member.id, channelId: newS.channelId });
     }
   });
 
+  client.on(Events.GuildCreate, (guild) => void syncGuildMembers(guild));
   client.once(Events.ClientReady, async (c) => {
+    for (const guild of c.guilds.cache.values()) await syncGuildMembers(guild);
     // Resume sessions for people already sitting in voice when the bot starts
     for (const guild of c.guilds.cache.values()) {
       const cfg = await enabledConfig(guild.id, "activity");
