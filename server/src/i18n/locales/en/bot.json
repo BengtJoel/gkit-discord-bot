@@ -5,7 +5,9 @@
     "welcomeDm": "Welcome to {server}!",
     "welcomeLeave": "**{username}** left the server.",
     "tempVoiceName": "{displayname}'s channel",
-    "reactionRolesTitle": "Pick your roles"
+    "reactionRolesTitle": "Pick your roles",
+    "cardTitle": "Welcome {displayname}!",
+    "cardSubtitle": "Member #{membercount}"
   },
   "common": {
     "somethingWrong": "Something went wrong 😕",

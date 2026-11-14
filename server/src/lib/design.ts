@@ -1,53 +1,17 @@
 import { AttachmentBuilder, EmbedBuilder, type Guild, type GuildMember, type MessageCreateOptions, type User } from "discord.js";
-import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
 import { renderTemplate } from "./template.js";
+import { fetchImage, renderCard } from "./card.js";
+import { guildT } from "../i18n/index.js";
 
 /**
  * A designed message: text, an optional embed and an optional banner image.
  * Shared by welcome messages and the embed message builder.
  */
 
-const hex = z.string().regex(/^#[0-9a-f]{6}$/i);
-const httpUrl = z.union([z.literal(""), z.url({ protocol: /^https?$/ }).max(2000)]);
-
-export const embedSchema = z
-  .object({
-    enabled: z.boolean().default(false),
-    title: z.string().max(256).default(""),
-    url: httpUrl.default(""),
-    description: z.string().max(4000).default(""),
-    /** null = the server's brand colour */
-    color: hex.nullable().default(null),
-    /** Small line above the title */
-    author: z.enum(["none", "member", "server"]).default("none"),
-    /** Small picture top-right */
-    thumbnail: z.enum(["none", "member", "server"]).default("none"),
-    fields: z
-      .array(z.object({ name: z.string().min(1).max(256), value: z.string().min(1).max(1024), inline: z.boolean().default(false) }))
-      .max(25)
-      .default([]),
-    footer: z.string().max(2048).default(""),
-    timestamp: z.boolean().default(false),
-  })
-  .prefault({});
-
-/** Uploaded image (mediaId) or a link to one. Inside an embed it becomes the embed's big image. */
-export const imageSchema = z
-  .object({
-    mediaId: z.number().int().positive().nullable().default(null),
-    url: httpUrl.default(""),
-  })
-  .prefault({});
-
-export const designFields = {
-  message: z.string().max(2000).default(""),
-  embed: embedSchema,
-  image: imageSchema,
-};
-export const designSchema = z.object(designFields);
-export type Design = z.infer<typeof designSchema>;
+export { embedSchema, cardSchema, imageSchema, designFields, designSchema, type Design } from "./designSchema.js";
+import type { Design } from "./designSchema.js";
 
 export interface DesignContext {
   guild: Guild;
@@ -76,7 +40,12 @@ export async function buildDesigned(d: Design, ctx: DesignContext): Promise<Mess
   const files: AttachmentBuilder[] = [];
 
   let imageUrl: string | null = null;
-  if (d.image.mediaId) {
+  const cardUser = ctx.member?.user ?? ctx.user ?? null;
+  const card = d.image.card.enabled && cardUser ? await renderWelcomeCard(d.image, ctx) : null;
+  if (card) {
+    files.push(new AttachmentBuilder(card, { name: "welcome.png" }));
+    imageUrl = "attachment://welcome.png";
+  } else if (d.image.mediaId) {
     const m = await loadMedia(ctx.guild.id, d.image.mediaId);
     if (m) {
       const name = `banner.${EXT[m.mime] ?? "png"}`;
@@ -120,3 +89,49 @@ export async function buildDesigned(d: Design, ctx: DesignContext): Promise<Mess
 /** True when the design will produce something visible (used to skip sending empty welcome messages) */
 export const hasContent = (d: Design, fallback = "") =>
   !!(d.message || fallback || (d.embed.enabled && (d.embed.title || d.embed.description || d.embed.fields.length)) || d.image.mediaId || d.image.url);
+
+/**
+ * Renders the welcome card for a member. Exported for the dashboard preview.
+ * {user} becomes the display name, since a mention can't be drawn.
+ */
+export async function renderWelcomeCard(image: Design["image"], ctx: DesignContext): Promise<Buffer | null> {
+  const user = ctx.member?.user ?? ctx.user ?? null;
+  if (!user) return null;
+  const tr = await guildT(ctx.guild);
+  const c = image.card;
+  const tctx = { guild: ctx.guild, member: ctx.member ?? undefined, user };
+  const text = (s: string) => renderTemplate(s.replace(/\{user(\.mention)?\}/g, "{displayname}"), tctx).trim();
+  let background: Buffer | null = null;
+  let key: string | undefined;
+  if (image.mediaId) {
+    const m = await loadMedia(ctx.guild.id, image.mediaId);
+    if (m) {
+      background = m.data;
+      key = `m${m.id}`;
+    }
+  } else if (image.url) {
+    background = await fetchImage(image.url);
+    key = image.url;
+  }
+  const avatar = await fetchImage(user.displayAvatarURL({ extension: "png", size: 256, forceStatic: true }));
+  try {
+    return await renderCard(
+      {
+        background,
+        avatar,
+        initial: ctx.member?.displayName ?? user.username,
+        title: text(c.title || tr("defaults.cardTitle")),
+        subtitle: text(c.subtitle || tr("defaults.cardSubtitle")),
+        style: {
+          layout: c.layout,
+          textColor: c.textColor,
+          overlay: c.overlay,
+          accentColor: c.accentColor ?? `#${ctx.brandColor.toString(16).padStart(6, "0")}`,
+        },
+      },
+      key,
+    );
+  } catch {
+    return null;
+  }
+}

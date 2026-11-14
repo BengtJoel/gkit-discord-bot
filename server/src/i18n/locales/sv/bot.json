@@ -5,7 +5,9 @@
     "welcomeDm": "Välkommen till {server}!",
     "welcomeLeave": "**{username}** lämnade servern.",
     "tempVoiceName": "{displayname}s kanal",
-    "reactionRolesTitle": "Välj dina roller"
+    "reactionRolesTitle": "Välj dina roller",
+    "cardTitle": "Välkommen {displayname}!",
+    "cardSubtitle": "Medlem #{membercount}"
   },
   "common": {
     "somethingWrong": "Något gick fel 😕",

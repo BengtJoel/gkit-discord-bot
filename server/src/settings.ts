@@ -1,4 +1,4 @@
-import { designFields } from "./lib/design.js";
+import { designFields } from "./lib/designSchema.js";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "./db/index.js";

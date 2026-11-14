@@ -18,6 +18,7 @@ COPY dashboard/package.json dashboard/
 RUN npm ci --omit=dev -w server && npm cache clean --force
 COPY --from=build /app/server/dist server/dist
 COPY --from=build /app/server/drizzle server/drizzle
+COPY --from=build /app/server/assets server/assets
 COPY --from=build /app/dashboard/dist dashboard/dist
 USER node
 EXPOSE 3000

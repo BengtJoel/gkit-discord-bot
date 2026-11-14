@@ -7,7 +7,8 @@ import { requireGuildAccess } from "../auth.js";
 import { apiError } from "../errors.js";
 import { audit, discordGuild, type GP } from "./guild.js";
 import { brandColor } from "../../settings.js";
-import { buildDesigned, designSchema, type Design } from "../../lib/design.js";
+import { buildDesigned, designSchema, imageSchema, renderWelcomeCard, type Design } from "../../lib/design.js";
+import type { GuildMember, User } from "discord.js";
 import { sendToChannel } from "../../core/actions.js";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -69,6 +70,28 @@ export function registerEmbedRoutes(app: FastifyInstance) {
         .where(and(eq(schema.media.id, Number(req.params.id)), eq(schema.media.guildId, req.params.guildId)));
       if (!row) return apiError(reply, 404, "errors.notFound");
       return reply.header("content-type", row.mime).header("cache-control", "private, max-age=86400").send(row.data);
+    });
+
+    /** Welcome card preview, rendered with the logged-in user as the "new member" */
+    r.post<GP>("/api/guilds/:guildId/card-preview", async (req, reply) => {
+      const image = imageSchema.parse((req.body as { image?: unknown })?.image ?? {});
+      image.card.enabled = true;
+      const s = req.session!;
+      const real = discordGuild(req.params.guildId);
+      const member = real ? await real.members.fetch(s.userId).catch(() => null) : null;
+      // Without the bot (dev) we fake just enough of a guild and user to draw the card
+      const guild = real ?? ({ id: req.params.guildId, name: "Server", memberCount: 0, iconURL: () => null } as unknown as Guild);
+      const user =
+        member?.user ??
+        ({
+          id: s.userId,
+          username: s.username,
+          globalName: null,
+          displayAvatarURL: () => (s.avatar ? `https://cdn.discordapp.com/avatars/${s.userId}/${s.avatar}.png?size=256` : `https://cdn.discordapp.com/embed/avatars/0.png`),
+        } as unknown as User);
+      const png = await renderWelcomeCard(image, { guild, member: member as GuildMember | null, user, brandColor: await brandColor(req.params.guildId) });
+      if (!png) return apiError(reply, 500, "errors.serverError");
+      return reply.header("content-type", "image/png").header("cache-control", "no-store").send(png);
     });
 
     /* ---------- embed messages ---------- */

@@ -823,7 +823,22 @@
       "today": "Idag 18:45",
       "sendTest": "Skicka test",
       "testHint": "Postar meddelandet en gång i kanalen, som om du precis gått med",
-      "testSent": "Testmeddelandet är skickat"
+      "testSent": "Testmeddelandet är skickat",
+      "card": {
+        "title": "Välkomstkort",
+        "hint": "Ritar medlemmens profilbild och namn på bilden.",
+        "background": "Kortets bakgrund",
+        "backgroundHint": "Valfritt. Utan bild används en gradient i ringens färg.",
+        "layout": "Layout",
+        "center": "Centrerad",
+        "left": "Bild till vänster",
+        "heading": "Rubrik på kortet",
+        "subheading": "Andra raden",
+        "textColor": "Text",
+        "ring": "Ring",
+        "overlay": "Mörka bakgrunden: {{n}} %",
+        "rendering": "Uppdaterar kortet…"
+      }
     },
     "embeds": {
       "description": "Bygg snygga meddelanden med embeds, fält och bilder och posta dem som boten. Redigera dem senare så uppdateras meddelandet i Discord.",

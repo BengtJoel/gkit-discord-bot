@@ -108,7 +108,7 @@ describe("message designs", () => {
     const cfg = moduleSchemas.welcome.parse({ join: { enabled: true, channelId: null, message: "Hej {user}" } });
     expect(cfg.join.message).toBe("Hej {user}");
     expect(cfg.join.embed.enabled).toBe(false);
-    expect(cfg.join.image).toEqual({ mediaId: null, url: "" });
+    expect(cfg.join.image).toMatchObject({ mediaId: null, url: "", card: { enabled: false } });
   });
   it("rejects non-http image links and too many fields", () => {
     expect(designSchema.safeParse({ image: { url: "javascript:alert(1)" } }).success).toBe(false);

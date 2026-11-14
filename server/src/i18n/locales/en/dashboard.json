@@ -823,7 +823,22 @@
       "today": "Today at 18:45",
       "sendTest": "Send test",
       "testHint": "Posts the message once in the channel, as if you had just joined",
-      "testSent": "Test message sent"
+      "testSent": "Test message sent",
+      "card": {
+        "title": "Welcome card",
+        "hint": "Draws the member's profile picture and name on the image.",
+        "background": "Card background",
+        "backgroundHint": "Optional. Without an image a gradient in the ring colour is used.",
+        "layout": "Layout",
+        "center": "Centred",
+        "left": "Picture to the left",
+        "heading": "Heading on the card",
+        "subheading": "Second line",
+        "textColor": "Text",
+        "ring": "Ring",
+        "overlay": "Darken background: {{n}}%",
+        "rendering": "Updating the card…"
+      }
     },
     "embeds": {
       "description": "Build good-looking messages with embeds, fields and images, and post them as the bot. Edit them later and the message in Discord is updated.",

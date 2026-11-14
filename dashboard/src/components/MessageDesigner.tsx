@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { ImagePlus, Link2, Plus, Trash2, Upload, X } from "lucide-react";
@@ -21,11 +21,21 @@ export interface EmbedDesign {
   footer: string;
   timestamp: boolean;
 }
+export interface CardDesign {
+  enabled: boolean;
+  layout: "center" | "left";
+  title: string;
+  subtitle: string;
+  textColor: string;
+  accentColor: string | null;
+  overlay: number;
+}
 export interface Design {
   message: string;
   embed: EmbedDesign;
-  image: { mediaId: number | null; url: string };
+  image: { mediaId: number | null; url: string; card: CardDesign };
 }
+export const blankCard = (): CardDesign => ({ enabled: false, layout: "center", title: "", subtitle: "", textColor: "#ffffff", accentColor: null, overlay: 35 });
 
 export const blankEmbed = (): EmbedDesign => ({
   enabled: false,
@@ -39,7 +49,7 @@ export const blankEmbed = (): EmbedDesign => ({
   footer: "",
   timestamp: false,
 });
-export const blankDesign = (): Design => ({ message: "", embed: blankEmbed(), image: { mediaId: null, url: "" } });
+export const blankDesign = (): Design => ({ message: "", embed: blankEmbed(), image: { mediaId: null, url: "", card: blankCard() } });
 
 const MAX_MB = 8;
 
@@ -53,6 +63,38 @@ function readFile(file: File) {
 }
 
 export const mediaUrl = (guildId: string, id: number) => `/api/guilds/${guildId}/media/${id}`;
+
+/** Server-rendered welcome card (with you as the new member), refreshed shortly after each change */
+function useCardPreview(image: Design["image"], active: boolean) {
+  const g = useGuild();
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const key = JSON.stringify(image);
+  useEffect(() => {
+    if (!active) return setUrl(null);
+    let cancelled = false;
+    let made: string | null = null;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/guilds/${g.id}/card-preview`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image }), credentials: "same-origin" });
+        if (res.ok && !cancelled) {
+          made = URL.createObjectURL(await res.blob());
+          setUrl(made);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (made) setTimeout(() => URL.revokeObjectURL(made!), 2000);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, active, g.id]);
+  return { url, loading };
+}
 
 /**
  * Editor for a message: text, optional embed and a banner image, with a Discord-style preview.
@@ -77,6 +119,9 @@ export function MessageDesigner({
   const e = value.embed;
   const setEmbed = (p: Partial<EmbedDesign>) => onChange({ ...value, embed: { ...e, ...p } });
   const g = useGuild();
+  const card = { ...blankCard(), ...(value.image.card ?? {}) };
+  const cardOn = withMember && card.enabled;
+  const preview = useCardPreview({ ...value.image, card }, cardOn);
   const subjects = (["none", ...(withMember ? (["member"] as const) : []), "server"] as const).map((v) => ({ value: v, label: t(`dash.design.subject.${v}`) }));
 
   return (
@@ -130,13 +175,15 @@ export function MessageDesigner({
           )}
         </div>
 
-        <ImagePicker value={value.image} onChange={(image) => onChange({ ...value, image })} />
+        <ImagePicker value={value.image} onChange={(image) => onChange({ ...value, image: { ...image, card } })} cardOn={cardOn} />
+        {withMember && <CardEditor value={card} onChange={(c) => onChange({ ...value, image: { ...value.image, card: c } })} vars={vars} />}
         {extra}
       </div>
       <div className="min-w-0">
         <div className="label">{t("dash.design.preview")}</div>
         <div className="@4xl:sticky @4xl:top-4">
-          <Preview design={value} placeholder={placeholder} withMember={withMember} />
+          <Preview design={value} placeholder={placeholder} withMember={withMember} cardUrl={cardOn ? (preview.url ?? "") : null} />
+          {cardOn && preview.loading && <p className="hint mt-2">{t("dash.design.card.rendering")}</p>}
         </div>
       </div>
     </div>
@@ -171,7 +218,7 @@ function FieldsEditor({ value, onChange }: { value: EmbedDesign["fields"]; onCha
   );
 }
 
-function ImagePicker({ value, onChange }: { value: Design["image"]; onChange: (v: Design["image"]) => void }) {
+function ImagePicker({ value, onChange, cardOn }: { value: Design["image"]; onChange: (v: Omit<Design["image"], "card">) => void; cardOn: boolean }) {
   const { t } = useT();
   const g = useGuild();
   const toast = useToast();
@@ -198,8 +245,8 @@ function ImagePicker({ value, onChange }: { value: Design["image"]; onChange: (v
     <div className="rounded-lg border border-line p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-medium">{t("dash.design.banner")}</div>
-          <div className="text-[13px] text-muted">{t("dash.design.bannerHint")}</div>
+          <div className="text-sm font-medium">{t(cardOn ? "dash.design.card.background" : "dash.design.banner")}</div>
+          <div className="text-[13px] text-muted">{t(cardOn ? "dash.design.card.backgroundHint" : "dash.design.bannerHint")}</div>
         </div>
         {has ? (
           <Button size="sm" variant="ghost" icon={<Trash2 className="size-4" />} onClick={() => onChange({ mediaId: null, url: "" })}>{t("dash.design.removeImage")}</Button>
@@ -261,7 +308,7 @@ function md(text: string): ReactNode[] {
   return out;
 }
 
-function Preview({ design, placeholder, withMember }: { design: Design; placeholder?: string; withMember: boolean }) {
+function Preview({ design, placeholder, withMember, cardUrl }: { design: Design; placeholder?: string; withMember: boolean; cardUrl: string | null }) {
   const g = useGuild();
   const { t } = useT();
   const me = useMe().data?.user;
@@ -279,7 +326,7 @@ function Preview({ design, placeholder, withMember }: { design: Design; placehol
       .replace(/\{(membercount|server\.member_count)\}/g, String(g.memberCount))
       .replace(/\{channel\}/g, "#general");
   const e = design.embed;
-  const imgSrc = design.image.mediaId ? mediaUrl(g.id, design.image.mediaId) : design.image.url || null;
+  const imgSrc = cardUrl !== null ? cardUrl || null : design.image.mediaId ? mediaUrl(g.id, design.image.mediaId) : design.image.url || null;
   const text = design.message || (!e.enabled ? (placeholder ?? "") : "");
   const desc = e.description || (!design.message ? (placeholder ?? "") : "");
   const color = e.color ?? g.modules.branding.config.color;
@@ -327,7 +374,7 @@ function Preview({ design, placeholder, withMember }: { design: Design; placehol
                 </div>
                 {thumb && <img src={thumb} alt="" className="size-20 shrink-0 rounded object-cover" />}
               </div>
-              {imgSrc && <img src={imgSrc} alt="" className="mt-3 max-h-72 w-full rounded object-cover" />}
+              {imgSrc && <img src={imgSrc} alt="" className="mt-3 block h-auto w-full rounded" />}
               {(e.footer || e.timestamp) && (
                 <div className="mt-2 text-xs text-[#b5bac1]">
                   {fill(e.footer)}
@@ -337,9 +384,51 @@ function Preview({ design, placeholder, withMember }: { design: Design; placehol
               )}
             </div>
           )}
-          {!e.enabled && imgSrc && <img src={imgSrc} alt="" className="mt-1 max-h-72 max-w-[432px] rounded-lg object-cover" />}
+          {!e.enabled && imgSrc && <img src={imgSrc} alt="" className="mt-1 block h-auto w-full max-w-[432px] rounded-lg" />}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CardEditor({ value: c, onChange, vars }: { value: CardDesign; onChange: (c: CardDesign) => void; vars: { key: string; label: string }[] }) {
+  const { t } = useT();
+  const g = useGuild();
+  const set = (p: Partial<CardDesign>) => onChange({ ...c, ...p });
+  const cardVars = vars.filter((v) => v.key !== "user");
+  return (
+    <div className="rounded-lg border border-line">
+      <label className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
+        <div>
+          <div className="text-sm font-medium">{t("dash.design.card.title")}</div>
+          <div className="text-[13px] text-muted">{t("dash.design.card.hint")}</div>
+        </div>
+        <Toggle checked={c.enabled} onChange={(enabled) => set({ enabled })} />
+      </label>
+      {c.enabled && (
+        <div className="space-y-3 border-t border-line p-4">
+          <Field label={t("dash.design.card.layout")}>
+            <Segmented value={c.layout} onChange={(layout) => set({ layout })} options={[{ value: "center", label: t("dash.design.card.center") }, { value: "left", label: t("dash.design.card.left") }]} />
+          </Field>
+          <Field label={t("dash.design.card.heading")}>
+            <TemplateInput value={c.title} onChange={(title) => set({ title })} variables={cardVars} rows={1} placeholder={t("defaults.cardTitle")} />
+          </Field>
+          <Field label={t("dash.design.card.subheading")}>
+            <TemplateInput value={c.subtitle} onChange={(subtitle) => set({ subtitle })} variables={cardVars} rows={1} placeholder={t("defaults.cardSubtitle")} />
+          </Field>
+          <div className="flex flex-wrap items-end gap-4">
+            <Field label={t("dash.design.card.textColor")}>
+              <input type="color" className="h-9 w-14 cursor-pointer rounded-md border border-line bg-panel-2 p-1" value={c.textColor} onChange={(e) => set({ textColor: e.target.value })} />
+            </Field>
+            <Field label={t("dash.design.card.ring")}>
+              <input type="color" className="h-9 w-14 cursor-pointer rounded-md border border-line bg-panel-2 p-1" value={c.accentColor ?? g.modules.branding.config.color} onChange={(e) => set({ accentColor: e.target.value })} />
+            </Field>
+            <Field label={t("dash.design.card.overlay", { n: c.overlay })} className="min-w-48 flex-1">
+              <input type="range" min={0} max={90} step={5} value={c.overlay} onChange={(e) => set({ overlay: Number(e.target.value) })} className="w-full accent-[var(--color-accent,#8b5cf6)]" />
+            </Field>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
